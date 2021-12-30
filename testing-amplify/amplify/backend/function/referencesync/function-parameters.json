@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "storage": {
+      "referencedb": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    }
+  },
+  "lambdaLayers": [],
+  "secretNames": [
+    "dropbox_app_key",
+    "dropbox_app_secret"
+  ]
+}

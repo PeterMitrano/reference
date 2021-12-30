@@ -1,3 +1,5 @@
+from time import time
+
 from database import create_connection
 
 
@@ -16,8 +18,11 @@ def generate_bib(oauth_token):
         entries.append(entry_str)
 
     full_bib_str = '\n'.join(entries)
-    with open("references.bib", 'w') as f:
-        f.write(full_bib_str)
+
+    return {
+        'generated-at': str(int(time())),
+        'text': full_bib_str,
+    }
 
 
 def make_cite_name(title, authors, venue, year):

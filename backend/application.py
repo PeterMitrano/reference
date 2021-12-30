@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 from dropbox import Dropbox
 from flask import Flask
+from flask_cors import CORS
 
-from backend.bib import generate_bib
+from bib import generate_bib
 from database import delete_papers_table, create_papers_table
-# noinspection PyUnresolvedReferences
 from rename_files import extract_all_citation_info, update_papers_table, rename_files
 
 oauth_token = "l1VJPM_ThysAAAAAAAAAAWTfjrl3jIxgz46lMvaabjQ0d5FQdoZwsLEUEUG-o5Ji"
@@ -21,16 +21,17 @@ def sync():
 
 
 application = Flask(__name__)
+CORS(application)
 
 
 @application.route('/sync')
-def user_bibtex():
+def sync_route():
     sync()
     return generate_bib(oauth_token)
 
 
 @application.route('/bibtex')
-def user_bibtex():
+def bibtex_route():
     return generate_bib(oauth_token)
 
 

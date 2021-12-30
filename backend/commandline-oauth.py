@@ -7,6 +7,10 @@ from dropbox import DropboxOAuth2FlowNoRedirect
 This example walks through a basic oauth flow using the existing long-lived token type
 Populate your app key and app secret in order to run this locally
 '''
+# the amplify lambda function has these keys:
+# dropbox_app_key
+# dropbox_app_secret
+
 APP_KEY = "yaac238058lk984"
 APP_SECRET = "347gkb72ftjhwe5"
 

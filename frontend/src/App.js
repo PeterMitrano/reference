@@ -2,9 +2,10 @@ import './App.css';
 
 function SyncButton(props) {
     return (
-        <button onClick={() => fetch('/bibtex').then(res => res.json())
-            .then((data) => {
-                props.bib = data
+        <button onClick={() => fetch('localhost:5000/sync').then(res => res.json())
+            .then((res) => {
+                console.log("Created at " + res['created-at'])
+                props.text = res['text']
             })
             .catch(console.log)}>
             Sync & Regenerate

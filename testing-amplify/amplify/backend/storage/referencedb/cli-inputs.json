@@ -1,0 +1,18 @@
+{
+  "resourceName": "referencedb",
+  "tableName": "papers",
+  "partitionKey": {
+    "fieldName": "filename",
+    "fieldType": "string"
+  },
+  "gsi": [
+    {
+      "name": "dropbox_token",
+      "partitionKey": {
+        "fieldName": "dropbox_token",
+        "fieldType": "string"
+      }
+    }
+  ],
+  "triggerFunctions": []
+}
