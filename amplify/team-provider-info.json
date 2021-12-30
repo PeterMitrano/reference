@@ -10,6 +10,13 @@
       "StackName": "amplify-reference-dev-140803",
       "StackId": "arn:aws:cloudformation:us-east-1:498480461879:stack/amplify-reference-dev-140803/d1c4bcc0-69a3-11ec-bbdd-126619318597",
       "AmplifyAppId": "d2lw19uzgyfl97"
+    },
+    "categories": {
+      "function": {
+        "referencesync": {
+          "secretsPathAmplifyAppId": "d2lw19uzgyfl97"
+        }
+      }
     }
   }
 }

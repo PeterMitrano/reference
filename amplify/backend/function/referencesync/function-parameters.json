@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "storage": {
+      "Paper:@model(appsync)": [
+        "create",
+        "read",
+        "update",
+        "delete"
+      ],
+      "User:@model(appsync)": [
+        "read"
+      ]
+    }
+  },
+  "lambdaLayers": [],
+  "secretNames": [
+    "dropbox_app_key",
+    "dropbox_app_secret"
+  ]
+}
