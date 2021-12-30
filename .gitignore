@@ -1,3 +1,5 @@
 venv
+*.db
+*.bib
 *.swp
 .idea
