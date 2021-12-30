@@ -1,6 +1,11 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
+export const sync = /* GraphQL */ `
+  query Sync($text: String) {
+    sync(text: $text)
+  }
+`;
 export const getPaper = /* GraphQL */ `
   query GetPaper($id: ID!) {
     getPaper(id: $id) {
