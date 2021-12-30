@@ -16,3 +16,8 @@ type User @model {
   id: ID!
   dropbox_oauth_token: String!
 }
+
+
+type Query {
+  sync(text: String): String @function(name: "referencesync-${env}")
+}

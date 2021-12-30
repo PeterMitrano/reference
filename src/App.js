@@ -1,13 +1,20 @@
 import './App.css';
+import {withAuthenticator} from '@aws-amplify/ui-react'
+
+import { Auth, API } from 'aws-amplify'
+import { listUsers } from './graphql/queries'
+
+async function getUser() {
+    const user = await Auth.currentAuthenticatedUser()
+    console.log(user)
+}
+
+const users = await API.graphql(listUsers)
+console.log(users)
 
 function SyncButton(props) {
     return (
-        <button onClick={() => fetch('localhost:5000/sync').then(res => res.json())
-            .then((res) => {
-                console.log("Created at " + res['created-at'])
-                props.text = res['text']
-            })
-            .catch(console.log)}>
+        <button onClick={() => API.get() }>
             Sync & Regenerate
         </button>
     );
@@ -26,5 +33,4 @@ function App() {
     );
 }
 
-
-export default App;
+export default withAuthenticator(App)

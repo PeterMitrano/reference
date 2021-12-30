@@ -14,8 +14,13 @@
     "categories": {
       "function": {
         "referencesync": {
-          "secretsPathAmplifyAppId": "d2lw19uzgyfl97"
+          "secretsPathAmplifyAppId": "d2lw19uzgyfl97",
+          "deploymentBucketName": "amplify-reference-dev-140803-deployment",
+          "s3Key": "amplify-builds/referencesync-357259336230396e6d51-build.zip"
         }
+      },
+      "auth": {
+        "reference9b551af2": {}
       }
     }
   }
