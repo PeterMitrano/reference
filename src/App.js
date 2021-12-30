@@ -3,26 +3,32 @@ import {AmplifyAuthenticator, AmplifySignOut} from '@aws-amplify/ui-react'
 import {AuthState, onAuthUIStateChange} from '@aws-amplify/ui-components';
 
 
-import {API, Auth, graphqlOperation} from 'aws-amplify'
-import React from "react";
-import {listUsers} from "./graphql/queries";
+import {API, graphqlOperation} from 'aws-amplify'
+import React, {useEffect, useState} from "react";
+import {sync} from "./graphql/queries";
 import {createUser} from "./graphql/mutations";
-import {sync} from "./graphql/queries"
 
-function SyncButton(props) {
-    return (
-        <button>
-            Sync & Regenerate
-        </button>
-    );
-}
+function Sync(props) {
+    const [text, setText] = useState('empty text')
 
-function Bibtex(props) {
+    async function call_sync() {
+        try {
+            const sync_result = await API.graphql(graphqlOperation(sync))
+            const sync_result_text = sync_result.data.sync
+            console.log("sync result:", sync_result_text)
+            setText(sync_result_text)
+        } catch (err) {
+            console.log('error fetching text')
+        }
+    }
+
     return (
-        <p>
-            {props.text}
-        </p>
-    );
+        <div>
+            <button onClick={call_sync}>
+                Sync & Regenerate
+            </button>
+            <p>{text}</p>
+        </div>);
 }
 
 function ReadingList(props) {
@@ -35,9 +41,8 @@ const AuthStateApp = () => {
 
     React.useEffect(() => {
         // my own stuff here
-        const new_user = {dropbox_oauth_token: "mytoken"}
-        API.graphql(graphqlOperation(createUser, {input: {new_user}})).then(console.log).catch(console.log)
-         API.graphql(graphqlOperation(sync)).then(console.log).catch(console.log)
+        // const new_user = {dropbox_oauth_token: "mytoken"}
+        // API.graphql(graphqlOperation(createUser, {input: {new_user}})).then(console.log).catch(console.log)
         // this is from the template, no idea what it does
         return onAuthUIStateChange((nextAuthState, authData) => {
             setAuthState(nextAuthState);
@@ -45,17 +50,16 @@ const AuthStateApp = () => {
         });
     }, []);
 
-    return authState === AuthState.SignedIn && user ? (
-        <div className="App">
+    if (authState === AuthState.SignedIn && user) {
+        return (<div className="App">
             <AmplifySignOut/>
             <div>Hello, {user.username}</div>
-            <SyncButton/>
-            <Bibtex text={'hello'}/>
+            <Sync/>
             <ReadingList/>
-        </div>
-    ) : (
-        <AmplifyAuthenticator/>
-    );
+        </div>);
+    } else {
+        return (<AmplifyAuthenticator/>);
+    }
 }
 
 export default AuthStateApp;

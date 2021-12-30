@@ -21,6 +21,12 @@
       },
       "auth": {
         "reference9b551af2": {}
+      },
+      "hosting": {
+        "amplifyhosting": {
+          "appId": "d2lw19uzgyfl97",
+          "type": "manual"
+        }
       }
     }
   }
