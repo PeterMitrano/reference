@@ -1,53 +1,79 @@
-from gql import Client, gql
-from gql.transport.requests import RequestsHTTPTransport
+import json
+from typing import Tuple, List
+
+import requests
+
+from citation_search import CitationInfo
 
 
-def delete_papers_table():
-    pass
-
-
-def create_papers_table():
-    transport = RequestsHTTPTransport("http://192.168.1.25:20002/graphql")
-
-    with open("/home/peter/projects/reference/amplify/backend/api/reference/schema.graphql", 'r') as f:
-        schema = '\n'.join(f.readlines())
-    client = Client(transport=transport, schema=schema)
-
-    query = gql("""
-        mutation CreatePaper($input: CreatePaperInput!) {
-          createPaper(input: $input) {
-            filename
-            dropbox_oauth_token
-            title
-            authors
-            year
-            venue
-          }
-        }
-    """)
-
-    params = {
-        "input": {
-            "filename": 'test_filename.pdf',
-            "dropbox_oauth_token": 'test_token',
-            "title": 'my paper',
-            "authors": 'peter m',
-            "year": '2021',
-            "venue": 'myvenue',
-        }
+def delete_papers(dropbox_oauth_token):
+    query = {
+        'query': 'mutation deletePaper ',
+        # 'query': 'query MyQuery { listUsers { items { google_id dropbox_oauth_token}}}'
+        'variables': {}
     }
+    res = graphql_operation(query)
+    success = res.ok
 
-    result = client.execute(query, variable_values=params)
-    print(result)
+    return success, res
 
-def update_papers_table(citations_info, oauth_token):
+
+def update_papers_table(citations_info: List[Tuple[str, CitationInfo]], dropbox_oauth_token):
     # FIXME: this will create duplicates
-    columns = ['filename', 'oauth_token', 'title', 'authors', 'venue', 'year']
-    values_strs = []
-    for file, citation_info in citations_info:
+    for file_path, citation_info in citations_info:
         authors_str = '<author>'.join(citation_info.authors)
-        values = [file.path_display, oauth_token, citation_info.title, authors_str, citation_info.venue,
-                  citation_info.year]
-        values_str = ','.join([f"\"{v}\"" for v in values])
-        values_strs.append(f"({values_str})")
-    insert_sql = f"INSERT INTO papers ({','.join(columns)}) VALUES {','.join(values_strs)};"
+
+        # NOTE: this was copied directly from mutations.js, maybe we can do all of this automatically during codegen?
+        mutate_query_str = """
+          mutation CreatePaper(
+            $input: CreatePaperInput!
+            $condition: ModelPaperConditionInput
+          ) {
+            createPaper(input: $input, condition: $condition) {
+              id
+              filename
+              dropbox_oauth_token
+              title
+              authors
+              year
+              venue
+              createdAt
+              updatedAt
+            }
+          }
+        """
+        variables = {
+            'input': {
+                'filename': file_path,
+                'dropbox_oauth_token': dropbox_oauth_token,
+                'title': citation_info.title,
+                'authors': authors_str,
+                'year': citation_info.year,
+                'venue': citation_info.venue,
+            }
+        }
+        mutate = {
+            'query': mutate_query_str,
+            'variables': variables,
+        }
+        res = graphql_operation(mutate)
+        print(res.json())
+
+    # insert_sql = f"INSERT INTO papers ({','.join(columns)}) VALUES {','.join(values_strs)};"
+
+
+def graphql_operation(graphql_op):
+    op_data = json.dumps(graphql_op)
+
+    host = "192.168.1.25"
+    # taken from src/aws-exports.js under aws_appsync_apiKey
+    api_key = "da2-fakeApiId123456"
+    port = 20002
+    # noinspection HttpUrlsUsage
+    url = f"http://{host}:{port}/graphql"
+    headers = {
+        'Content-type': 'application/json',
+        'x-api-key': api_key,
+    }
+    res = requests.post(url, data=op_data, headers=headers)
+    return res

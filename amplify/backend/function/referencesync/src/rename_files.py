@@ -40,13 +40,14 @@ def extract_all_citation_info(dbx):
     citations_info = []
     for file in res.entries:
         path = pathlib.Path(file.name)
+        file_path: str = file.path_display
         if isinstance(file, FileMetadata):
             if path.suffix == '.pdf':
                 citation_info = extract_citation_info(dbx, file)
                 if citation_info is not None:
-                    citations_info.append((file.path_display, citation_info))
+                    citations_info.append((file_path, citation_info))
             else:
-                print(f"Skipping non-PDF file {file.path_display}")
+                print(f"Skipping non-PDF file {file_path}")
         else:
             print(f"Skipping non-file {path}")
     return citations_info
