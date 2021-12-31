@@ -57,6 +57,10 @@ def search_for_citation_info(title, author):
 
 
 def search_semantic_scholar(title, author):
+    if title == '' and author == '':
+        print("No title or author")
+        return None
+
     res = search_semantic_scholar_with_query(title + ' ' + author)
     if res is None:
         return None
@@ -79,5 +83,8 @@ def extract_citation_info(dbx, file):
     pdf_metadata = extract_standardized_metadata(dbx, file)
     if pdf_metadata is None:
         return None
+    # NOTE: we need a fallback for when the title and author are blank!
+    #  perhaps take in a whole slew of features here and use ML to determine title and author,
+    #  then do semantic scholar search?
     citation_info = search_for_citation_info(pdf_metadata.title, pdf_metadata.author)
     return citation_info

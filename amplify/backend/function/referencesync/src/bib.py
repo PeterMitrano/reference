@@ -5,13 +5,15 @@ from database import list_papers_for_token
 
 def generate_bib(dropbox_oauth_token):
     papers = list_papers_for_token(dropbox_oauth_token)
-    if papers is not None:
+    if papers is None:
         print("Listing papers for the user failed")
 
     entries = []
     for paper in papers:
-        id, path, token, title, author_str, venue, year = paper
-        authors = author_str.split("<author>")
+        authors = paper['authors']
+        venue = paper['venue']
+        year = str(paper['year'])
+        title = paper['title']
         entry_str = format_bibtex_entry(title, authors, venue, year)
         entries.append(entry_str)
 

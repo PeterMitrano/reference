@@ -59,8 +59,8 @@ def update_papers_table(citations_info: List[Tuple[str, CitationInfo]], dropbox_
                 'filename': file_path,
                 'dropbox_oauth_token': dropbox_oauth_token,
                 'title': citation_info.title,
-                'authors': authors_str,
-                'year': citation_info.year,
+                'authors': citation_info.authors,
+                'year': int(citation_info.year),
                 'venue': citation_info.venue,
             }
         }
@@ -68,15 +68,10 @@ def update_papers_table(citations_info: List[Tuple[str, CitationInfo]], dropbox_
             'query': mutate_query_str,
             'variables': variables,
         }
-        res = graphql_operation(mutate)
-        if not res.ok:
+        mutate_data = graphql_operation(mutate)
+        if mutate_data is None:
             print("Failed to create paper")
-            print(res.text)
             continue
-
-        res_json = res.json()
-        if 'data' not in res_json:
-            print("")
 
 
 def list_papers_for_token(dropbox_oauth_token):

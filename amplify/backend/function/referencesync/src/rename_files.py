@@ -38,6 +38,7 @@ def extract_parts_for_renaming(citation_info):
 def extract_all_citation_info(dbx):
     res = dbx.files_list_folder('')
     citations_info = []
+    # FIXME: debugging
     for file in res.entries:
         path = pathlib.Path(file.name)
         file_path: str = file.path_display
@@ -83,7 +84,8 @@ def rename_files(dbx, citations_info):
             relocation_paths.append(relocation_path)
         citations_info_renamed.append((new_path, citation_info))
 
-    # FIXME: error handling here?
-    dbx.files_move_batch_v2(relocation_paths)
+    if len(relocation_paths) > 0:
+        # FIXME: error handling here?
+        dbx.files_move_batch_v2(relocation_paths)
 
     return citations_info_renamed
