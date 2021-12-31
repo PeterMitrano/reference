@@ -5,19 +5,13 @@ import {AuthState, onAuthUIStateChange} from '@aws-amplify/ui-components'
 import {API, graphqlOperation} from 'aws-amplify'
 import React, {useEffect, useState} from "react"
 import {sync} from "./graphql/queries"
-import {Dropbox} from "dropbox";
+import {Dropbox} from "dropbox"
 
 function DropboxComponent(props) {
     const [url, setUrl] = useState('')
     // function getAccessTokenFromUrl() {
-    //     return utils.parseQueryString(window.location.hash).access_token;
+    //     return utils.parseQueryString(window.location.hash).access_token
     // }
-    //
-    // const accessToken = getAccessTokenFromUrl();
-    // <script src="https://cdn.jsdelivr.net/npm/promise-polyfill@7/dist/polyfill.min.js"></script>
-    // <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.js"></script>
-    // <script src="/__build__/Dropbox-sdk.min.js"></script>
-    // <script src="/utils.js"></script>
 
     const CLIENT_ID = 'yaac238058lk984'
     // where does the App Secret go?
@@ -38,9 +32,7 @@ function DropboxComponent(props) {
     })
 
     return (
-        <a href={url}>
-            Click here to link to your dropbox
-        </a>
+        <a href={url}>Click here to link to your dropbox</a>
     )
 }
 
