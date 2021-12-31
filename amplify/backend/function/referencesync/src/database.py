@@ -7,19 +7,31 @@ from citation_search import CitationInfo
 
 
 def delete_papers(dropbox_oauth_token):
-    query = {
-        'query': 'mutation deletePaper ',
-        # 'query': 'query MyQuery { listUsers { items { google_id dropbox_oauth_token}}}'
-        'variables': {}
-    }
-    res = graphql_operation(query)
-    success = res.ok
+    """ delete all papers by first listing all papers, then deleting each one """
+    papers = list_papers_for_token(dropbox_oauth_token)
+    if papers is None:
+        print("Listing papers for the user failed")
 
-    return success, res
+    success = True
+    for paper in papers:
+        paper_id = paper['id']
+        query = {
+            'query': 'mutation MyMutation($id: ID!) { deletePaper(input: {id: $id}) { id }}',
+            'variables': {
+                'id': paper_id,
+            }
+        }
+        del_data = graphql_operation(query)
+        if del_data is None:
+            success = False
+            print("Failed deleting paper")
+            continue
+
+    return success
 
 
 def update_papers_table(citations_info: List[Tuple[str, CitationInfo]], dropbox_oauth_token):
-    # FIXME: this will create duplicates
+    # FIXME: this could create duplicates
     for file_path, citation_info in citations_info:
         authors_str = '<author>'.join(citation_info.authors)
 
@@ -57,9 +69,41 @@ def update_papers_table(citations_info: List[Tuple[str, CitationInfo]], dropbox_
             'variables': variables,
         }
         res = graphql_operation(mutate)
-        print(res.json())
+        if not res.ok:
+            print("Failed to create paper")
+            print(res.text)
+            continue
 
-    # insert_sql = f"INSERT INTO papers ({','.join(columns)}) VALUES {','.join(values_strs)};"
+        res_json = res.json()
+        if 'data' not in res_json:
+            print("")
+
+
+def list_papers_for_token(dropbox_oauth_token):
+    list_papers_for_token_str = """query MyQuery($token: String) {
+        listPapers(filter: {dropbox_oauth_token: {eq: $token}}) {
+            items {
+                id
+                title
+                year
+                venue
+                authors
+            }
+        }
+    }"""
+    query = {
+        'query': list_papers_for_token_str,
+        'variables': {
+            'token': dropbox_oauth_token,
+        },
+    }
+    list_data = graphql_operation(query)
+
+    if list_data is None:
+        return None
+
+    papers = list_data['listPapers']['items']
+    return papers
 
 
 def graphql_operation(graphql_op):
@@ -76,4 +120,8 @@ def graphql_operation(graphql_op):
         'x-api-key': api_key,
     }
     res = requests.post(url, data=op_data, headers=headers)
-    return res
+
+    # Error handling
+    if res.ok and (data := res.json().get('data')) is not None:
+        return data
+    return None

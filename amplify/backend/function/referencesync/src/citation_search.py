@@ -24,7 +24,7 @@ def search_semantic_scholar_with_query(query):
     }
     res = requests.get(search_url, params)
     if not res.ok:
-        print(res.status_code)
+        print("Semantic scholar query failed")
         print(res.text)
         return None
     return res

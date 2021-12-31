@@ -1,12 +1,16 @@
 from time import time
 
+from database import list_papers_for_token
 
-def generate_bib(oauth_token):
+
+def generate_bib(dropbox_oauth_token):
+    papers = list_papers_for_token(dropbox_oauth_token)
+    if papers is not None:
+        print("Listing papers for the user failed")
+
     entries = []
-    select_sql = f"SELECT * FROM papers WHERE oauth_token = '{oauth_token}';"
-
-    for row in rows:
-        id, path, token, title, author_str, venue, year = row
+    for paper in papers:
+        id, path, token, title, author_str, venue, year = paper
         authors = author_str.split("<author>")
         entry_str = format_bibtex_entry(title, authors, venue, year)
         entries.append(entry_str)

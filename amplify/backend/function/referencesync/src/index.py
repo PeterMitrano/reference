@@ -10,10 +10,9 @@ from rename_files import extract_all_citation_info, rename_files
 def handler(event, context):
     dropbox_oauth_token = event['arguments']['dropbox_oauth_token']
 
-    success, res = delete_papers(dropbox_oauth_token)
+    success = delete_papers(dropbox_oauth_token)
     if not success:
         print("Failed to delete papers")
-        print(res.text)
         return ''
 
     with Dropbox(oauth2_access_token=dropbox_oauth_token) as dbx:

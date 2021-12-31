@@ -83,6 +83,7 @@ def rename_files(dbx, citations_info):
             relocation_paths.append(relocation_path)
         citations_info_renamed.append((new_path, citation_info))
 
+    # FIXME: error handling here?
     dbx.files_move_batch_v2(relocation_paths)
 
     return citations_info_renamed
