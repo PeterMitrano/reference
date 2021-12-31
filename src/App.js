@@ -1,12 +1,48 @@
-import './App.css';
+import './App.css'
 import {AmplifyAuthenticator, AmplifySignOut} from '@aws-amplify/ui-react'
-import {AuthState, onAuthUIStateChange} from '@aws-amplify/ui-components';
-
+import {AuthState, onAuthUIStateChange} from '@aws-amplify/ui-components'
 
 import {API, graphqlOperation} from 'aws-amplify'
-import React, {useEffect, useState} from "react";
-import {sync} from "./graphql/queries";
-import {createUser} from "./graphql/mutations";
+import React, {useEffect, useState} from "react"
+import {sync} from "./graphql/queries"
+import {Dropbox} from "dropbox";
+
+function DropboxComponent(props) {
+    const [url, setUrl] = useState('')
+    // function getAccessTokenFromUrl() {
+    //     return utils.parseQueryString(window.location.hash).access_token;
+    // }
+    //
+    // const accessToken = getAccessTokenFromUrl();
+    // <script src="https://cdn.jsdelivr.net/npm/promise-polyfill@7/dist/polyfill.min.js"></script>
+    // <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.js"></script>
+    // <script src="/__build__/Dropbox-sdk.min.js"></script>
+    // <script src="/utils.js"></script>
+
+    const CLIENT_ID = 'yaac238058lk984'
+    // where does the App Secret go?
+
+    var dbx = new Dropbox({clientId: CLIENT_ID})
+
+    async function get_url() {
+        try {
+            const authUrl = await dbx.auth.getAuthenticationUrl('http://localhost:3000')
+            setUrl(authUrl)
+        } catch (err) {
+            console.log('error getting auth url')
+        }
+    }
+
+    useEffect(() => {
+        get_url()
+    })
+
+    return (
+        <a href={url}>
+            Click here to link to your dropbox
+        </a>
+    )
+}
 
 function Sync(props) {
     const [text, setText] = useState('empty text')
@@ -28,7 +64,8 @@ function Sync(props) {
                 Sync & Regenerate
             </button>
             <p>{text}</p>
-        </div>);
+        </div>
+    )
 }
 
 function ReadingList(props) {
@@ -36,30 +73,28 @@ function ReadingList(props) {
 }
 
 const AuthStateApp = () => {
-    const [authState, setAuthState] = React.useState();
-    const [user, setUser] = React.useState();
+    const [authState, setAuthState] = React.useState()
+    const [user, setUser] = React.useState()
 
     React.useEffect(() => {
-        // my own stuff here
-        // const new_user = {dropbox_oauth_token: "mytoken"}
-        // API.graphql(graphqlOperation(createUser, {input: {new_user}})).then(console.log).catch(console.log)
         // this is from the template, no idea what it does
         return onAuthUIStateChange((nextAuthState, authData) => {
-            setAuthState(nextAuthState);
+            setAuthState(nextAuthState)
             setUser(authData)
-        });
-    }, []);
+        })
+    }, [])
 
     if (authState === AuthState.SignedIn && user) {
         return (<div className="App">
             <AmplifySignOut/>
-            <div>Hello, {user.username}</div>
+            <DropboxComponent/>
+            <div>{user.username}</div>
             <Sync/>
             <ReadingList/>
-        </div>);
+        </div>)
     } else {
-        return (<AmplifyAuthenticator/>);
+        return (<AmplifyAuthenticator/>)
     }
 }
 
-export default AuthStateApp;
+export default AuthStateApp
