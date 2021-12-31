@@ -169,7 +169,6 @@ const AuthStateApp = () => {
         return (<div className="App">
             <AmplifySignOut/>
             <DropboxComponent username={user.username}/>
-            <div>{user.username}</div>
             <Sync/>
             <ReadingList/>
         </div>)
