@@ -1,15 +1,9 @@
 from time import time
 
-from database import create_connection
-
 
 def generate_bib(oauth_token):
     entries = []
-    conn = create_connection()
-    cur = conn.cursor()
     select_sql = f"SELECT * FROM papers WHERE oauth_token = '{oauth_token}';"
-    cur.execute(select_sql)
-    rows = cur.fetchall()
 
     for row in rows:
         id, path, token, title, author_str, venue, year = row

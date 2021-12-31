@@ -11,7 +11,7 @@ export const getPaper = /* GraphQL */ `
     getPaper(id: $id) {
       id
       filename
-      user
+      dropbox_oauth_token
       title
       authors
       year
@@ -31,7 +31,7 @@ export const listPapers = /* GraphQL */ `
       items {
         id
         filename
-        user
+        dropbox_oauth_token
         title
         authors
         year

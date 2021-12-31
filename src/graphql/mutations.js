@@ -9,7 +9,7 @@ export const createPaper = /* GraphQL */ `
     createPaper(input: $input, condition: $condition) {
       id
       filename
-      user
+      dropbox_oauth_token
       title
       authors
       year
@@ -27,7 +27,7 @@ export const updatePaper = /* GraphQL */ `
     updatePaper(input: $input, condition: $condition) {
       id
       filename
-      user
+      dropbox_oauth_token
       title
       authors
       year
@@ -45,7 +45,7 @@ export const deletePaper = /* GraphQL */ `
     deletePaper(input: $input, condition: $condition) {
       id
       filename
-      user
+      dropbox_oauth_token
       title
       authors
       year

@@ -11,6 +11,7 @@ aws-wsgi = "*"
 boto3 = "*"
 dropbox = "*"
 "pdfminer.six" = "*"
+gql = "*"
 
 [requires]
 python_version = "3.8"

@@ -6,7 +6,7 @@ export const onCreatePaper = /* GraphQL */ `
     onCreatePaper {
       id
       filename
-      user
+      dropbox_oauth_token
       title
       authors
       year
@@ -21,7 +21,7 @@ export const onUpdatePaper = /* GraphQL */ `
     onUpdatePaper {
       id
       filename
-      user
+      dropbox_oauth_token
       title
       authors
       year
@@ -36,7 +36,7 @@ export const onDeletePaper = /* GraphQL */ `
     onDeletePaper {
       id
       filename
-      user
+      dropbox_oauth_token
       title
       authors
       year
