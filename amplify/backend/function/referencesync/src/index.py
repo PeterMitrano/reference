@@ -1,16 +1,20 @@
-import json
+from dropbox import Dropbox
+
+from bib import generate_bib
+from database import delete_papers_table, create_papers_table
+from rename_files import extract_all_citation_info, update_papers_table, rename_files
+
 
 def handler(event, context):
-  print('received event:')
-  print(event)
+    dropbox_oauth_token = event['arguments']['dropbox_oauth_token']
 
-  return "mock bib text"
-#   return {
-#       'statusCode': 200,
-#       'headers': {
-#           'Access-Control-Allow-Headers': '*',
-#           'Access-Control-Allow-Origin': '*',
-#           'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-#       },
-#       'body': json.dumps('Hello from your new Amplify Python lambda!')
-#   }
+    delete_papers_table()
+    create_papers_table()
+
+    with Dropbox(oauth2_access_token=dropbox_oauth_token) as dbx:
+        citations_info = extract_all_citation_info(dbx)
+        update_papers_table(citations_info, dropbox_oauth_token)
+        rename_files(dbx, citations_info)
+
+    bib_text = generate_bib(dropbox_oauth_token)
+    return bib_text

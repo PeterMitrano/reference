@@ -52,6 +52,16 @@ function getDropboxAccessTokenFromUrl() {
 
 const dropbox_oauth_token_from_url = getDropboxAccessTokenFromUrl()
 
+async function myListUsers() {
+    try {
+        const list_users_result = await API.graphql(graphqlOperation(listUsers))
+        return list_users_result.data.listUsers.items
+    } catch (err) {
+        console.error("error checking if the current user has linked dropbox")
+        return []
+    }
+}
+
 function DropboxComponent(props) {
     const [url, setUrl] = useState('')
     const [dropboxLinked, setDropBoxLinked] = useState(false)
@@ -77,16 +87,6 @@ function DropboxComponent(props) {
             // console.log('created user: ' + create_result)
         } catch (err) {
             console.error('error adding user')
-        }
-    }
-
-    async function myListUsers() {
-        try {
-            const list_users_result = await API.graphql(graphqlOperation(listUsers))
-            return list_users_result.data.listUsers.items
-        } catch (err) {
-            console.error("error checking if the current user has linked dropbox")
-            return []
         }
     }
 
@@ -133,21 +133,32 @@ function Sync(props) {
 
     async function call_sync() {
         try {
-            const sync_result = await API.graphql(graphqlOperation(sync))
-            const sync_result_text = sync_result.data.sync
-            console.log("sync result:", sync_result_text)
-            setText(sync_result_text)
+            const users = await myListUsers()
+            for (const user of users) {
+                if (user['google_id'] === props.username) {
+                    const dropbox_oauth_token = user['dropbox_oauth_token']
+                    const sync_args = {'dropbox_oauth_token': dropbox_oauth_token}
+                    const sync_result = await API.graphql(graphqlOperation(sync, sync_args))
+                    const sync_result_text = sync_result.data.sync
+                    console.log("sync result:", sync_result_text)
+                    setText(sync_result_text)
+                }
+            }
         } catch (err) {
             console.error('error fetching text')
         }
     }
 
-    return (<div>
-        <button onClick={call_sync}>
-            Sync & Regenerate
-        </button>
-        <p>{text}</p>
-    </div>)
+    if (props.username) {
+        return (<div>
+            <button onClick={call_sync}>
+                Sync & Regenerate
+            </button>
+            <p>{text}</p>
+        </div>)
+    } else {
+        return "Loading..."
+    }
 }
 
 function ReadingList(props) {
@@ -169,7 +180,7 @@ const AuthStateApp = () => {
         return (<div className="App">
             <AmplifySignOut/>
             <DropboxComponent username={user.username}/>
-            <Sync/>
+            <Sync username={user.username}/>
             <ReadingList/>
         </div>)
     } else {

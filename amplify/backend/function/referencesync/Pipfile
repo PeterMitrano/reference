@@ -9,6 +9,8 @@ verify_ssl = true
 src = {editable = true, path = "./src"}
 aws-wsgi = "*"
 boto3 = "*"
+dropbox = "*"
+"pdfminer.six" = "*"
 
 [requires]
 python_version = "3.8"

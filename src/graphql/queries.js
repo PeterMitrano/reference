@@ -2,8 +2,8 @@
 // this is an auto generated file. This will be overwritten
 
 export const sync = /* GraphQL */ `
-  query Sync($text: String) {
-    sync(text: $text)
+  query Sync($dropbox_oauth_token: String) {
+    sync(dropbox_oauth_token: $dropbox_oauth_token)
   }
 `;
 export const getPaper = /* GraphQL */ `
