@@ -49,8 +49,9 @@ export const onDeletePaper = /* GraphQL */ `
 export const onCreateUser = /* GraphQL */ `
   subscription OnCreateUser {
     onCreateUser {
-      id
+      google_id
       dropbox_oauth_token
+      id
       createdAt
       updatedAt
     }
@@ -59,8 +60,9 @@ export const onCreateUser = /* GraphQL */ `
 export const onUpdateUser = /* GraphQL */ `
   subscription OnUpdateUser {
     onUpdateUser {
-      id
+      google_id
       dropbox_oauth_token
+      id
       createdAt
       updatedAt
     }
@@ -69,8 +71,9 @@ export const onUpdateUser = /* GraphQL */ `
 export const onDeleteUser = /* GraphQL */ `
   subscription OnDeleteUser {
     onDeleteUser {
-      id
+      google_id
       dropbox_oauth_token
+      id
       createdAt
       updatedAt
     }

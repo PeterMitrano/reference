@@ -46,8 +46,9 @@ export const listPapers = /* GraphQL */ `
 export const getUser = /* GraphQL */ `
   query GetUser($id: ID!) {
     getUser(id: $id) {
-      id
+      google_id
       dropbox_oauth_token
+      id
       createdAt
       updatedAt
     }
@@ -61,8 +62,9 @@ export const listUsers = /* GraphQL */ `
   ) {
     listUsers(filter: $filter, limit: $limit, nextToken: $nextToken) {
       items {
-        id
+        google_id
         dropbox_oauth_token
+        id
         createdAt
         updatedAt
       }

@@ -13,7 +13,7 @@ type Paper @model {
 }
 
 type User @model {
-    id: ID!
+    google_id: String!
     dropbox_oauth_token: String!
 }
 
