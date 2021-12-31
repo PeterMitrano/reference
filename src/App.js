@@ -4,9 +4,9 @@ import {AuthState, onAuthUIStateChange} from '@aws-amplify/ui-components'
 
 import {API, graphqlOperation} from 'aws-amplify'
 import {listUsers, sync} from "./graphql/queries"
-import {Dropbox} from "dropbox"
 import {createUser} from "./graphql/mutations"
 import {useEffect, useState} from "react";
+import {Dropbox} from "dropbox";
 
 function parseQueryString(str) {
     const ret = Object.create(null);
@@ -50,22 +50,13 @@ function getDropboxAccessTokenFromUrl() {
     return parseQueryString(window.location.hash).access_token
 }
 
-const dropbox_oauth_token = getDropboxAccessTokenFromUrl()
-
-function redirectWithTokenFromDropbox() {
-    return !!dropbox_oauth_token;
-}
+const dropbox_oauth_token_from_url = getDropboxAccessTokenFromUrl()
 
 function DropboxComponent(props) {
     const [url, setUrl] = useState('')
     const [dropboxLinked, setDropBoxLinked] = useState(false)
 
-    const CLIENT_ID = 'yaac238058lk984'
-    // where does the App Secret go?
-
-    let dbx = new Dropbox({clientId: CLIENT_ID})
-
-    async function get_url() {
+    async function get_url(dbx) {
         console.log("getting URL")
         try {
             const authUrl = await dbx.auth.getAuthenticationUrl('http://localhost:3000')
@@ -77,7 +68,7 @@ function DropboxComponent(props) {
 
     async function create_user() {
         const user = {
-            'google_id': props.username, 'dropbox_oauth_token': dropbox_oauth_token
+            'google_id': props.username, 'dropbox_oauth_token': dropbox_oauth_token_from_url
         }
         console.log('adding user ' + user)
         try {
@@ -99,31 +90,40 @@ function DropboxComponent(props) {
     }
 
     async function check_dropbox_linked() {
-        console.log("checking if dropbox is linked")
         const users = await myListUsers()
         const google_ids = users.map(user => user['google_id'])
+        console.log("checking if dropbox is linked")
         const is_linked = google_ids.includes(props.username)
-        // setDropBoxLinked(is_linked)
         console.log("is_linked: " + is_linked)
+        return is_linked
     }
 
-    if (!dropboxLinked) {
-        if (url === '') {
-            get_url()
-        }
-        check_dropbox_linked().then(() => {
-            if (redirectWithTokenFromDropbox() && dropboxLinked) {
-                // This is effectively a callback, having been re-directed back from Dropbox
-                // here we save into our database of users the dropbox token
-                create_user()
+    if (props.username) {
+        check_dropbox_linked().then((dropbox_linked) => {
+            if (dropbox_linked) {
+            } else {
+                if (url === '') {
+                    const CLIENT_ID = 'yaac238058lk984'
+                    let dbx = new Dropbox({clientId: CLIENT_ID})
+                    get_url(dbx)
+                }
+
+                if (!!dropbox_oauth_token_from_url) {
+                    // This is effectively a callback, having been re-directed back from Dropbox
+                    // here we save into our database of users the dropbox token
+                    create_user()
+                }
             }
-        })
-    }
 
-    if (dropboxLinked) {
-        return <p>Dropbox Linked!</p>
+            return "placeholder"
+        })
+        if (dropboxLinked) {
+            return <p>Dropbox Linked!</p>
+        } else {
+            return (<a href={url}>Click here to link to your dropbox</a>)
+        }
     } else {
-        return (<a href={url}>Click here to link to your dropbox</a>)
+        return 'Loading...'
     }
 }
 
