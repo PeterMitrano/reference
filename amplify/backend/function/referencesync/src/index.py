@@ -1,5 +1,6 @@
 import json
 
+import requests
 from dropbox import Dropbox
 
 from bib import generate_bib
@@ -9,6 +10,26 @@ from rename_files import extract_all_citation_info, rename_files
 
 def handler(event, context):
     dropbox_oauth_token = event['arguments']['dropbox_oauth_token']
+
+    graphql_query = {
+        'query': 'query MyQuery { listUsers { items { google_id dropbox_oauth_token}}}'
+    }
+    query_data = json.dumps(graphql_query)
+
+    HOST = "192.168.1.25"
+    # taken from src/aws-exports.js under aws_appsync_apiKey
+    API_KEY = "da2-fakeApiId123456"
+    PORT = 20002
+    # noinspection HttpUrlsUsage
+    url = f"http://{HOST}:{PORT}/graphql"
+    headers = {
+        'Content-type': 'application/json',
+        'x-api-key': API_KEY,
+    }
+    res = requests.post(url, data=query_data, headers=headers)
+    print(res.text)
+
+    return res.text
 
     delete_papers_table()
     create_papers_table()
