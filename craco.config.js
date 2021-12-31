@@ -1,11 +1,14 @@
-const path = require("path");
-
 module.exports = {
     webpack: {
-        resolve: {
-            fallback: {
-                crypto: require.resolve('crypto-browserify')
-            }
-        }
-    }
+        configure: {
+            resolve: {
+                fallback: {
+                    crypto: require.resolve("crypto-browserify"),
+                    // path: require.resolve("path-browserify"),
+                    stream: require.resolve("stream-browserify"),
+                    util: require.resolve("util"),
+                },
+            },
+        },
+    },
 };
