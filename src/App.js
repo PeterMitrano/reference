@@ -151,7 +151,8 @@ function DropboxComponent(props) {
 
 function Sync(props) {
     const [text, setText] = useState('Sync to see your bibtex')
-    const [syncStarted, setSyncStarted] = useState(0)
+    const [syncStarted, setSyncStarted] = useState(false)
+    const [syncFinished, setSyncFinished] = useState(false)
 
     async function call_sync() {
         setSyncStarted(true)
@@ -165,6 +166,7 @@ function Sync(props) {
                     const sync_result_data = sync_result.data.sync
                     const sync_result_text = sync_result_data['text']
                     setText(sync_result_text)
+                    setSyncFinished(true)
                 }
             }
 
@@ -175,7 +177,7 @@ function Sync(props) {
     }
 
     if (props.username) {
-        if (syncStarted) {
+        if (syncStarted && !syncFinished) {
             return (<Box id={'sync'}>
                 <CircularProgress/>
                 <Box className={'BibText'}>Loading...</Box>
@@ -183,7 +185,7 @@ function Sync(props) {
         } else {
             return (<Box id={'sync'}>
                 <Button variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
-                <Box sx={{}} className={'BibText'}>
+                <Box className={'BibText'}>
                     {text}
                 </Box>
             </Box>)
