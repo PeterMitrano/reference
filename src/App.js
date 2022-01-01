@@ -178,9 +178,7 @@ function Sync(props) {
         if (syncStarted) {
             return (<Box id={'sync'}>
                 <CircularProgress/>
-                <Box sx={{}} className={'BibText'}>
-                    {text}
-                </Box>
+                <Box className={'BibText'}>Loading...</Box>
             </Box>)
         } else {
             return (<Box id={'sync'}>

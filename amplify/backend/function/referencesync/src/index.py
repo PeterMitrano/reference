@@ -9,7 +9,8 @@ from rename_files import extract_all_citation_info, rename_files
 
 
 def handler(event, context):
-    dropbox_oauth_token = event['arguments']['dropbox_oauth_token']
+    args = event['arguments']
+    dropbox_oauth_token = args['dropbox_oauth_token']
 
     success = delete_papers(dropbox_oauth_token)
     if not success:
