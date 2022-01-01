@@ -10,7 +10,7 @@ import {Dropbox} from "dropbox"
 
 // UI
 import Button from '@mui/material/Button'
-import {AppBar, Box, Stack, Toolbar, Typography} from "@mui/material"
+import {AppBar, Box, CircularProgress, Stack, Toolbar, Typography} from "@mui/material"
 
 
 function parseQueryString(str) {
@@ -151,8 +151,10 @@ function DropboxComponent(props) {
 
 function Sync(props) {
     const [text, setText] = useState('Sync to see your bibtex')
+    const [syncStarted, setSyncStarted] = useState(0)
 
     async function call_sync() {
+        setSyncStarted(true)
         try {
             const users = await myListUsers()
             for (const user of users) {
@@ -173,14 +175,21 @@ function Sync(props) {
     }
 
     if (props.username) {
-        return (<Box id={'sync'}>
-            <Button variant={'outlined'} onClick={call_sync}>
-                Sync & Regenerate
-            </Button>
-            <Box sx={{}} className={'BibText'}>
-                {text}
-            </Box>
-        </Box>)
+        if (syncStarted) {
+            return (<Box id={'sync'}>
+                <CircularProgress/>
+                <Box sx={{}} className={'BibText'}>
+                    {text}
+                </Box>
+            </Box>)
+        } else {
+            return (<Box id={'sync'}>
+                <Button variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
+                <Box sx={{}} className={'BibText'}>
+                    {text}
+                </Box>
+            </Box>)
+        }
     } else {
         return "Loading..."
     }
