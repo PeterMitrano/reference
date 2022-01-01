@@ -114,9 +114,11 @@ def graphql_operation(graphql_op, force_local=False):
         api_key = "da2-fakeApiId123456"
         graphql_endpoint = "http://192.168.1.25:20002/graphql"
     else:
+        amplify_env = os.environ.get('ENV', 'dev')
         ssm = boto3.client('ssm')
-        parameter = ssm.get_parameter(Name='/amplify/d2lw19uzgyfl97/dev/AMPLIFY_referencesync_reference_api_key',
-                                      WithDecryption=True)
+        parameter = ssm.get_parameter(
+            Name=f'/amplify/d2lw19uzgyfl97/{amplify_env}/AMPLIFY_referencesync_reference_api_key',
+            WithDecryption=True)
         api_key = parameter['Parameter']['Value']
         graphql_endpoint = "https://idmuuu5euvhflkxgdjq4mq7ryu.appsync-api.us-east-1.amazonaws.com/graphql"
 
