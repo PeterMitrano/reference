@@ -15,6 +15,7 @@
   "lambdaLayers": [],
   "secretNames": [
     "dropbox_app_key",
-    "dropbox_app_secret"
+    "dropbox_app_secret",
+    "reference_api_key"
   ]
 }

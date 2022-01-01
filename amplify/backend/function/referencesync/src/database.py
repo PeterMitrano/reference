@@ -1,3 +1,6 @@
+import os
+
+import boto3
 import json
 from typing import Tuple, List
 
@@ -11,6 +14,7 @@ def delete_papers(dropbox_oauth_token):
     papers = list_papers_for_token(dropbox_oauth_token)
     if papers is None:
         print("Listing papers for the user failed")
+        return
 
     success = True
     for paper in papers:
@@ -104,17 +108,23 @@ def list_papers_for_token(dropbox_oauth_token):
 def graphql_operation(graphql_op):
     op_data = json.dumps(graphql_op)
 
-    host = "192.168.1.25"
-    # taken from src/aws-exports.js under aws_appsync_apiKey
-    api_key = "da2-fakeApiId123456"
-    port = 20002
-    # noinspection HttpUrlsUsage
-    url = f"http://{host}:{port}/graphql"
+    is_local_env = (os.environ.get('HOSTNAME') == 'Einstein')
+    if is_local_env:
+        # taken from src/aws-exports.js under aws_appsync_apiKey
+        api_key = "da2-fakeApiId123456"
+        graphql_endpoint = "http://192.168.1.25:20002/graphql"
+    else:
+        ssm = boto3.client('ssm')
+        parameter = ssm.get_parameter(Name='/amplify/d2lw19uzgyfl97/dev/AMPLIFY_referencesync_reference_api_key',
+                                      WithDecryption=True)
+        api_key = parameter['Parameter']['Value']
+        graphql_endpoint = "https://idmuuu5euvhflkxgdjq4mq7ryu.appsync-api.us-east-1.amazonaws.com/graphql"
+
     headers = {
         'Content-type': 'application/json',
         'x-api-key': api_key,
     }
-    res = requests.post(url, data=op_data, headers=headers)
+    res = requests.post(graphql_endpoint, data=op_data, headers=headers)
 
     # Error handling
     if res.ok and (data := res.json().get('data')) is not None:

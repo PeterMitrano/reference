@@ -175,6 +175,28 @@
                   "dropbox_app_secret"
                 ]
               ]
+            },
+            "reference_api_key": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::Sub": [
+                      "/amplify/${appId}/${env}/AMPLIFY_${functionName}_",
+                      {
+                        "appId": {
+                          "Ref": "secretsPathAmplifyAppId"
+                        },
+                        "env": {
+                          "Ref": "env"
+                        },
+                        "functionName": "referencesync"
+                      }
+                    ]
+                  },
+                  "reference_api_key"
+                ]
+              ]
             }
           }
         },
