@@ -10,7 +10,7 @@ import {Dropbox} from "dropbox"
 
 // UI
 import Button from '@mui/material/Button'
-import {AppBar, Box, Toolbar, Typography} from "@mui/material"
+import {AppBar, Box, Stack, Toolbar, Typography} from "@mui/material"
 
 
 function parseQueryString(str) {
@@ -107,10 +107,11 @@ function DropboxComponent(props) {
     if (props.username) {
         if (dropboxLinked) {
             return (
-                <Box>
-                    <p>Dropbox Linked!</p>
-                    <Sync username={props.username}/>
-                    <ReadingList/>
+                <Box sx={{m: 2}} id={'dropbox'} spacing={2}>
+                    <Stack>
+                        <Sync username={props.username}/>
+                        <ReadingList/>
+                    </Stack>
                 </Box>
             )
         } else {
@@ -134,7 +135,7 @@ function DropboxComponent(props) {
             })
 
             return (
-                <Box>
+                <Box sx={{m: 2}}>
                     <h1>Step 1: Link to your dropbox account.</h1>
                     <p>This gives our app access to a sandboxed folder on your account (inside Apps/)</p>
                     <Button variant={'outlined'}>
@@ -149,7 +150,7 @@ function DropboxComponent(props) {
 }
 
 function Sync(props) {
-    const [text, setText] = useState('Link Dropbox and Sync to see your bibtex')
+    const [text, setText] = useState('Sync to see your bibtex')
 
     async function call_sync() {
         try {
@@ -172,19 +173,21 @@ function Sync(props) {
     }
 
     if (props.username) {
-        return (<div>
+        return (<Box id={'sync'}>
             <Button variant={'outlined'} onClick={call_sync}>
                 Sync & Regenerate
             </Button>
-            <p style={{'whiteSpace': 'pre-line'}}>{text}</p>
-        </div>)
+            <Box sx={{}} className={'BibText'}>
+                {text}
+            </Box>
+        </Box>)
     } else {
         return "Loading..."
     }
 }
 
 function ReadingList(props) {
-    return <h1>Reading List</h1>
+    return <p>Reading List</p>
 }
 
 function MyAppBar() {
