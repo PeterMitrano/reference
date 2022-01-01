@@ -7,10 +7,10 @@ import {listUsers, sync} from "./graphql/queries"
 import {createUser} from "./graphql/mutations"
 import {useEffect, useState} from "react"
 import {Dropbox} from "dropbox"
-import {useNavigate} from 'react-router-dom'
 
 // UI
 import Button from '@mui/material/Button'
+import {AppBar, Box, Toolbar, Typography} from "@mui/material"
 
 
 function parseQueryString(str) {
@@ -106,7 +106,13 @@ function DropboxComponent(props) {
 
     if (props.username) {
         if (dropboxLinked) {
-            return <p>Dropbox Linked!</p>
+            return (
+                <Box>
+                    <p>Dropbox Linked!</p>
+                    <Sync username={props.username}/>
+                    <ReadingList/>
+                </Box>
+            )
         } else {
             check_dropbox_linked().then((dropbox_linked) => {
                 if (dropbox_linked) {
@@ -128,9 +134,13 @@ function DropboxComponent(props) {
             })
 
             return (
-                <Button variant={'outlined'}>
-                    <a href={url}>Link Dropbox</a>
-                </Button>
+                <Box>
+                    <h1>Step 1: Link to your dropbox account.</h1>
+                    <p>This gives our app access to a sandboxed folder on your account (inside Apps/)</p>
+                    <Button variant={'outlined'}>
+                        <a href={url}>Link Dropbox</a>
+                    </Button>
+                </Box>
             )
         }
     } else {
@@ -177,6 +187,18 @@ function ReadingList(props) {
     return <h1>Reading List</h1>
 }
 
+function MyAppBar() {
+    return (
+        <AppBar position='static'>
+            <Toolbar>
+                <Typography variant="h6" component="div" sx={{flexGrow: 1}}>
+                    Reference
+                </Typography>
+                <AmplifySignOut/>
+            </Toolbar>
+        </AppBar>)
+}
+
 const AuthStateApp = () => {
     const [authState, setAuthState] = useState()
     const [user, setUser] = useState()
@@ -189,12 +211,10 @@ const AuthStateApp = () => {
     })
 
     if (authState === AuthState.SignedIn && user) {
-        return (<div className="App">
-            <AmplifySignOut/>
+        return (<Box className="App">
+            <MyAppBar/>
             <DropboxComponent username={user.username}/>
-            <Sync username={user.username}/>
-            <ReadingList/>
-        </div>)
+        </Box>)
     } else {
         return (<AmplifyAuthenticator/>)
     }
