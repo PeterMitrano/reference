@@ -1,4 +1,5 @@
 import json
+from time import time
 
 from dropbox import Dropbox
 
@@ -22,7 +23,10 @@ def handler(event, context):
     update_papers_table(citations_info, dropbox_oauth_token)
 
     bib_text = generate_bib(dropbox_oauth_token)
-    return bib_text
+    return {
+        'generated_at': str(int(time())),
+        'text': bib_text,
+    }
 
 
 if __name__ == '__main__':

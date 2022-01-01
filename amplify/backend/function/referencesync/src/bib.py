@@ -1,5 +1,3 @@
-from time import time
-
 from database import list_papers_for_token
 
 
@@ -19,10 +17,7 @@ def generate_bib(dropbox_oauth_token):
 
     full_bib_str = '\n'.join(entries)
 
-    return {
-        'generated-at': str(int(time())),
-        'text': full_bib_str,
-    }
+    return full_bib_str
 
 
 def make_cite_name(title, authors, venue, year):

@@ -12,6 +12,11 @@ type Paper @model {
     venue: String!
 }
 
+type SyncResult {
+    generated_at: String!
+    text: String!
+}
+
 type User @model {
     google_id: String!
     dropbox_oauth_token: String!
@@ -19,5 +24,5 @@ type User @model {
 
 
 type Query {
-    sync(dropbox_oauth_token: String): String @function(name: "referencesync-${env}")
+    sync(dropbox_oauth_token: String): SyncResult @function(name: "referencesync-${env}")
 }

@@ -3,7 +3,10 @@
 
 export const sync = /* GraphQL */ `
   query Sync($dropbox_oauth_token: String) {
-    sync(dropbox_oauth_token: $dropbox_oauth_token)
+    sync(dropbox_oauth_token: $dropbox_oauth_token) {
+      generated_at
+      text
+    }
   }
 `;
 export const getPaper = /* GraphQL */ `

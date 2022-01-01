@@ -79,12 +79,12 @@ function DropboxComponent(props) {
 
     async function create_user() {
         const user = {
-            'google_id': props.username, 'dropbox_oauth_token': dropbox_oauth_token_from_url
+            'google_id': props.username,
+            'dropbox_oauth_token': dropbox_oauth_token_from_url,
         }
         // console.log('adding user ' + user)
         try {
-            const create_result = await API.graphql(graphqlOperation(createUser, {input: user}))
-            // console.log('created user: ' + create_result)
+            await API.graphql(graphqlOperation(createUser, {input: user}))
         } catch (err) {
             console.error('error adding user')
         }
@@ -139,11 +139,13 @@ function Sync(props) {
                     const dropbox_oauth_token = user['dropbox_oauth_token']
                     const sync_args = {'dropbox_oauth_token': dropbox_oauth_token}
                     const sync_result = await API.graphql(graphqlOperation(sync, sync_args))
-                    const sync_result_text = sync_result.data.sync
-                    console.log("sync result:", sync_result_text)
+                    const sync_result_data = sync_result.data.sync
+                    const sync_result_text = sync_result_data['text']
                     setText(sync_result_text)
                 }
             }
+
+            // update the user to include the bib text
         } catch (err) {
             console.error('error fetching text')
         }
@@ -154,7 +156,7 @@ function Sync(props) {
             <button onClick={call_sync}>
                 Sync & Regenerate
             </button>
-            <p>{text}</p>
+            <p style={{'white-space': 'pre-line'}}>{text}</p>
         </div>)
     } else {
         return "Loading..."
