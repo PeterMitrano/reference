@@ -11,6 +11,8 @@ import {Dropbox} from "dropbox"
 // UI
 import Button from '@mui/material/Button'
 import {AppBar, Box, CircularProgress, Stack, Toolbar, Typography} from "@mui/material"
+import awsExports from "./aws-exports";
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 
 function parseQueryString(str) {
@@ -75,7 +77,7 @@ function DropboxComponent(props) {
     async function get_url(dbx) {
         // console.log("getting URL")
         try {
-            const authUrl = await dbx.auth.getAuthenticationUrl('http://localhost:3000')
+            const authUrl = await dbx.auth.getAuthenticationUrl(awsExports.oauth.redirectSignIn)
             setUrl(authUrl)
         } catch (err) {
             console.error('error getting auth url')
@@ -150,7 +152,8 @@ function DropboxComponent(props) {
 }
 
 function Sync(props) {
-    const [text, setText] = useState('Sync to see your bibtex')
+    const default_bib_text = 'Sync to see your bibtex'
+    const [bib_text, setText] = useState(default_bib_text)
     const [syncStarted, setSyncStarted] = useState(false)
     const [syncFinished, setSyncFinished] = useState(false)
 
@@ -183,12 +186,23 @@ function Sync(props) {
                 <Box className={'BibText'}>Loading...</Box>
             </Box>)
         } else {
-            return (<Box id={'sync'}>
-                <Button variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
-                <Box className={'BibText'}>
-                    {text}
-                </Box>
-            </Box>)
+            if (bib_text === default_bib_text) {
+                return (<Box id={'sync'}>
+                    <Button variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
+                    <Box className={'BibText'}>
+                        {bib_text}
+                    </Box>
+                </Box>)
+            } else {
+                return (<Box id={'sync'}>
+                    <Button variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
+                    <Box className={'BibText'}>
+                        <Button style={{float: 'right'}} variant={'outlined'}>Copy <ContentCopyIcon/></Button>
+                        {bib_text}
+                    </Box>
+                </Box>)
+
+            }
         }
     } else {
         return "Loading..."

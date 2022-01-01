@@ -38,7 +38,6 @@ def extract_parts_for_renaming(citation_info):
 def extract_all_citation_info(dbx):
     res = dbx.files_list_folder('')
     citations_info = []
-    # FIXME: debugging
     for file in res.entries:
         path = pathlib.Path(file.name)
         file_path: str = file.path_display

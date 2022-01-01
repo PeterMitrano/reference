@@ -50,8 +50,9 @@
     border-style: solid;
     border-radius: 10px;
     margin: 32px;
-    padding: 32px;
+    padding: 8px;
     width: 50%;
+    min-height: 80px;
     color: #666666;
     margin-left: auto;
     margin-right: auto;
