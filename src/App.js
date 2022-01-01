@@ -5,45 +5,50 @@ import {AuthState, onAuthUIStateChange} from '@aws-amplify/ui-components'
 import {API, graphqlOperation} from 'aws-amplify'
 import {listUsers, sync} from "./graphql/queries"
 import {createUser} from "./graphql/mutations"
-import {useEffect, useState} from "react";
-import {Dropbox} from "dropbox";
+import {useEffect, useState} from "react"
+import {Dropbox} from "dropbox"
+import {useNavigate} from 'react-router-dom'
+
+// UI
+import Button from '@mui/material/Button'
+
 
 function parseQueryString(str) {
-    const ret = Object.create(null);
+    const ret = Object.create(null)
 
     if (typeof str !== 'string') {
-        return ret;
+        return ret
     }
 
-    str = str.trim().replace(/^(\?|#|&)/, '');
+    str = str.trim().replace(/^(\?|#|&)/, '')
 
     if (!str) {
-        return ret;
+        return ret
     }
 
     str.split('&').forEach((param) => {
-        const parts = param.replace(/\+/g, ' ').split('=');
+        const parts = param.replace(/\+/g, ' ').split('=')
         // Firefox (pre 40) decodes `%3D` to `=`
         // https://github.com/sindresorhus/query-string/pull/37
-        let key = parts.shift();
-        let val = parts.length > 0 ? parts.join('=') : undefined;
+        let key = parts.shift()
+        let val = parts.length > 0 ? parts.join('=') : undefined
 
-        key = decodeURIComponent(key);
+        key = decodeURIComponent(key)
 
         // missing `=` should be `null`:
         // http://w3.org/TR/2012/WD-url-20120524/#collect-url-parameters
-        val = val === undefined ? null : decodeURIComponent(val);
+        val = val === undefined ? null : decodeURIComponent(val)
 
         if (ret[key] === undefined) {
-            ret[key] = val;
+            ret[key] = val
         } else if (Array.isArray(ret[key])) {
-            ret[key].push(val);
+            ret[key].push(val)
         } else {
-            ret[key] = [ret[key], val];
+            ret[key] = [ret[key], val]
         }
-    });
+    })
 
-    return ret;
+    return ret
 }
 
 function getDropboxAccessTokenFromUrl() {
@@ -121,7 +126,12 @@ function DropboxComponent(props) {
                     }
                 }
             })
-            return (<a href={url}>Click here to link to your dropbox</a>)
+
+            return (
+                <Button variant={'outlined'}>
+                    <a href={url}>Link Dropbox</a>
+                </Button>
+            )
         }
     } else {
         return 'Loading...'
@@ -129,7 +139,7 @@ function DropboxComponent(props) {
 }
 
 function Sync(props) {
-    const [text, setText] = useState('empty text')
+    const [text, setText] = useState('Link Dropbox and Sync to see your bibtex')
 
     async function call_sync() {
         try {
@@ -153,10 +163,10 @@ function Sync(props) {
 
     if (props.username) {
         return (<div>
-            <button onClick={call_sync}>
+            <Button variant={'outlined'} onClick={call_sync}>
                 Sync & Regenerate
-            </button>
-            <p style={{'white-space': 'pre-line'}}>{text}</p>
+            </Button>
+            <p style={{'whiteSpace': 'pre-line'}}>{text}</p>
         </div>)
     } else {
         return "Loading..."
