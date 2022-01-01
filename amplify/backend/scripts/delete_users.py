@@ -23,7 +23,6 @@ def delete_users():
         }
         del_data = graphql_operation(query, force_local=True)
         if del_data is None:
-            success = False
             print("Failed deleting user")
             continue
         else:

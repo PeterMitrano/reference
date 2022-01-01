@@ -174,7 +174,7 @@ function Sync(props) {
                 }
             }
 
-            // update the user to include the bib text
+            // TODO: update the user to include the bib text? maybe?
         } catch (err) {
             console.error('error fetching text')
         }

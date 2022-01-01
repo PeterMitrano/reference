@@ -13,8 +13,8 @@ import awsExports from "./aws-exports";
 // copied from https://github.com/aws-amplify/amplify-cli/issues/2792
 // NOTE: another solution could be to use a `prod` branch where we hardcode these values
 // and hardcode them differently on master (for local dev)
-awsExports.oauth.redirectSignIn = window.location.origin
-awsExports.oauth.redirectSignOut = window.location.origin
+awsExports.oauth.redirectSignIn = `${window.location.origin}/`
+awsExports.oauth.redirectSignOut = `${window.location.origin}/`
 
 Amplify.configure(awsExports);
 
