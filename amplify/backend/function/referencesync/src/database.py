@@ -105,11 +105,11 @@ def list_papers_for_token(dropbox_oauth_token):
     return papers
 
 
-def graphql_operation(graphql_op):
+def graphql_operation(graphql_op, force_local=False):
     op_data = json.dumps(graphql_op)
 
     is_local_env = (os.environ.get('HOSTNAME') == 'Einstein')
-    if is_local_env:
+    if is_local_env or force_local:
         # taken from src/aws-exports.js under aws_appsync_apiKey
         api_key = "da2-fakeApiId123456"
         graphql_endpoint = "http://192.168.1.25:20002/graphql"

@@ -131,6 +131,7 @@ function DropboxComponent(props) {
                         // This is effectively a callback, having been re-directed back from Dropbox
                         // here we save into our database of users the dropbox token
                         create_user()
+                        // call immediately, to conservatively avoid re-calling create_user
                         setUserCreated(true)
                     }
                 }

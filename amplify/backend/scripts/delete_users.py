@@ -4,7 +4,7 @@ from database import graphql_operation
 def delete_users():
     list_users = "query MyQuery { listUsers { items { id } } }"
     query = {'query': list_users}
-    list_data = graphql_operation(query)
+    list_data = graphql_operation(query, force_local=True)
 
     if list_data is None:
         print("Failed to list users")
@@ -21,14 +21,13 @@ def delete_users():
                 'id': user_id,
             }
         }
-        del_data = graphql_operation(query)
+        del_data = graphql_operation(query, force_local=True)
         if del_data is None:
             success = False
             print("Failed deleting user")
             continue
         else:
             print(f"deleted user {user_id}")
-            print(del_data)
 
 
 if __name__ == '__main__':
