@@ -179,31 +179,46 @@ function Sync(props) {
         }
     }
 
-    if (props.username) {
-        if (syncStarted && !syncFinished) {
-            return (<Box id={'sync'}>
-                <CircularProgress/>
-                <Box className={'BibText'}>Loading...</Box>
-            </Box>)
-        } else {
-            if (bib_text === default_bib_text) {
-                return (<Box id={'sync'}>
-                    <Button variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
-                    <Box className={'BibText'}>
-                        {bib_text}
-                    </Box>
-                </Box>)
-            } else {
-                return (<Box id={'sync'}>
-                    <Button variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
-                    <Box className={'BibText'}>
-                        <Button style={{float: 'right'}} variant={'outlined'}>Copy <ContentCopyIcon/></Button>
-                        {bib_text}
-                    </Box>
-                </Box>)
-
-            }
+    function SyncButton(props) {
+        if (!props.show) {
+            return null
         }
+        return <Button variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
+    }
+
+    function SyncProgress(props) {
+        if (!props.show) {
+            return null
+        }
+        return <CircularProgress/>
+    }
+
+    function BibTextContents(props) {
+        if (!props.syncFinished) {
+            return null
+        } else if (props.bib_text === default_bib_text) {
+            return "Loading..."
+        } else {
+            return (
+                <Box>
+                    <Button style={{float: 'right'}} variant={'outlined'}>Copy <ContentCopyIcon/></Button>
+                    {props.bib_text}
+                </Box>
+            )
+        }
+    }
+
+    if (props.username) {
+        // working on a reducing code duplication with one return
+        return (
+            <Box id={'sync'}>
+                <SyncButton show={!syncStarted || syncFinished}/>
+                <SyncProgress show={syncStarted && !syncFinished}/>
+                <Box className={'BibText'}>
+                    <BibTextContents syncFinished={syncFinished} bib_text={bib_text}/>
+                </Box>
+            </Box>
+        )
     } else {
         return "Loading..."
     }
