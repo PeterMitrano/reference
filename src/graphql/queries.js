@@ -2,8 +2,8 @@
 // this is an auto generated file. This will be overwritten
 
 export const sync = /* GraphQL */ `
-  query Sync($dropbox_oauth_token: String) {
-    sync(dropbox_oauth_token: $dropbox_oauth_token) {
+  query Sync($dropbox_oauth_token: String, $max_files: Int) {
+    sync(dropbox_oauth_token: $dropbox_oauth_token, max_files: $max_files) {
       generated_at
       text
     }

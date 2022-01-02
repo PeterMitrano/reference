@@ -5,7 +5,6 @@ from dropbox import Dropbox
 
 from bib import generate_bib
 from database import update_papers_table, delete_papers
-from debugging import RemoteDebugSession
 from rename_files import extract_all_citation_info, rename_files
 
 
@@ -17,6 +16,7 @@ def get_dropbox_token(event):
 
 def sync(event):
     dropbox_oauth_token = get_dropbox_token(event)
+    max_files = int(event['arguments'].get('max_files', -1))
 
     success = delete_papers(dropbox_oauth_token)
     if not success:
@@ -24,7 +24,7 @@ def sync(event):
         return ''
 
     with Dropbox(oauth2_access_token=dropbox_oauth_token) as dbx:
-        citations_info = extract_all_citation_info(dbx)
+        citations_info = extract_all_citation_info(dbx, max_files)
         citations_info = rename_files(dbx, citations_info)
 
     update_papers_table(citations_info, dropbox_oauth_token)

@@ -24,6 +24,6 @@ type User @model {
 
 
 type Query {
-    sync(dropbox_oauth_token: String): SyncResult @function(name: "referencesync-${env}")
+    sync(dropbox_oauth_token: String, max_files: Int): SyncResult @function(name: "referencesync-${env}")
     regenerate(dropbox_oauth_token: String): SyncResult @function(name: "referencesync-${env}")
 }
