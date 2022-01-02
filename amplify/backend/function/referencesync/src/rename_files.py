@@ -78,7 +78,8 @@ def rename_file(original_path, citation_info):
 def rename_files(dbx, citations_info):
     relocation_paths = []
     citations_info_renamed = []
-    for original_path, citation_info in citations_info:
+    print("Renaming files")
+    for original_path, citation_info in tqdm(citations_info):
         relocation_path, new_path = rename_file(original_path, citation_info)
         if relocation_path is not None:
             relocation_paths.append(relocation_path)
@@ -86,6 +87,7 @@ def rename_files(dbx, citations_info):
 
     if len(relocation_paths) > 0:
         # FIXME: error handling here?
+        print("relocating files")
         dbx.files_move_batch_v2(relocation_paths)
 
     return citations_info_renamed

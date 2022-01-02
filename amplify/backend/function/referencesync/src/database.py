@@ -5,6 +5,7 @@ import json
 from typing import Tuple, List
 
 import requests
+from tqdm import tqdm
 
 from citation_search import CitationInfo
 
@@ -36,9 +37,8 @@ def delete_papers(dropbox_oauth_token):
 
 def update_papers_table(citations_info: List[Tuple[str, CitationInfo]], dropbox_oauth_token):
     # FIXME: this could create duplicates
-    for file_path, citation_info in citations_info:
-        authors_str = '<author>'.join(citation_info.authors)
-
+    print("Updating papers table")
+    for file_path, citation_info in tqdm(citations_info):
         # NOTE: this was copied directly from mutations.js, maybe we can do all of this automatically during codegen?
         mutate_query_str = """
           mutation CreatePaper(
