@@ -16,7 +16,7 @@ def get_dropbox_token(event):
 
 def get_max_files(event):
     max_files = event['arguments'].get('max_files', -1)
-    if max_files:
+    if max_files is None:
         return -1
     else:
         return int(max_files)
