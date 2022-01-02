@@ -16,7 +16,7 @@
         "referencesync": {
           "secretsPathAmplifyAppId": "d2lw19uzgyfl97",
           "deploymentBucketName": "amplify-reference-dev-140803-deployment",
-          "s3Key": "amplify-builds/referencesync-4e2b3651784d716b474a-build.zip"
+          "s3Key": "amplify-builds/referencesync-5048654f592f384b4b71-build.zip"
         }
       },
       "auth": {
