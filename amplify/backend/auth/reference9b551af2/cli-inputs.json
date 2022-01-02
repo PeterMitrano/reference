@@ -61,7 +61,6 @@
     },
     "breakCircularDependency": true,
     "dependsOn": [],
-    "hostedUIProviderCreds": "[]",
     "oAuthMetadata": "{\"AllowedOAuthFlows\":[\"code\"],\"AllowedOAuthScopes\":[\"phone\",\"email\",\"openid\",\"profile\",\"aws.cognito.signin.user.admin\"],\"CallbackURLs\":[\"http://localhost:3000/\",\"https://dev.d2lw19uzgyfl97.amplifyapp.com/\"],\"LogoutURLs\":[\"http://localhost:3000/\",\"https://dev.d2lw19uzgyfl97.amplifyapp.com/\"]}"
   }
 }

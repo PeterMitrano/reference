@@ -170,13 +170,14 @@ function Sync(props) {
                     const sync_result_data = sync_result.data.sync
                     const sync_result_text = sync_result_data['text']
                     setText(sync_result_text)
-                    setSyncFinished(true)
                 }
             }
 
             // TODO: update the user to include the bib text? maybe?
         } catch (err) {
             console.error('error fetching text')
+        } finally {
+            setSyncFinished(true)
         }
     }
 
