@@ -66,7 +66,7 @@ async function myGetUser(google_id) {
         }
         const list_users_result = await API.graphql(graphqlOperation(listUsers, variables))
         const items = list_users_result.data.listUsers.items
-        if (items.length == 1) {
+        if (items.length === 1) {
             return items[0]
         }
         return undefined
@@ -148,7 +148,7 @@ function DropboxComponent(props) {
             return (
                 <Box sx={{m: 2}}>
                     <h1>Step 1: Link to your dropbox account.</h1>
-                    <p>This gives our app access to a sandboxed folder on your account (inside Apps/)</p>
+                    <p>This gives our app access to a sand-boxed folder on your account (inside Apps/)</p>
                     <Button variant={'outlined'}>
                         <a href={url}>Link Dropbox</a>
                     </Button>
@@ -174,8 +174,7 @@ function Sync(props) {
                 const dropbox_oauth_token = user['dropbox_oauth_token']
                 const sync_args = {'dropbox_oauth_token': dropbox_oauth_token}
                 const sync_result = await API.graphql(graphqlOperation(sync, sync_args))
-                const sync_result_data = sync_result.data.sync
-                const sync_result_text = sync_result_data['text']
+                const sync_result_text = sync_result.data.sync['text']
                 setText(sync_result_text)
             } else {
                 console.error("error syncing, couldn't get user")
@@ -196,8 +195,7 @@ function Sync(props) {
                 const dropbox_oauth_token = user['dropbox_oauth_token']
                 const regenerate_args = {'dropbox_oauth_token': dropbox_oauth_token}
                 const regenerate_result = await API.graphql(graphqlOperation(regenerate, regenerate_args))
-                const regenerate_result_data = regenerate_result.data.regenerate
-                const regenerate_result_text = regenerate_result_data['text']
+                const regenerate_result_text = regenerate_result.data.regenerate['text']
                 setText(regenerate_result_text)
             } else {
                 console.error("error regenerating, couldn't get user")
