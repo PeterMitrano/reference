@@ -181,49 +181,44 @@ function Sync(props) {
         }
     }
 
-    function SyncButton(props) {
-        if (!props.show) {
-            return null
+    function SyncButton() {
+        if (!syncStarted || syncFinished) {
+            return <Button variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
         }
-        return <Button variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
+        return null
     }
 
-    function SyncProgress(props) {
-        if (!props.show) {
-            return null
+    function SyncProgress() {
+        if (syncStarted && !syncFinished) {
+            return <CircularProgress/>
         }
-        return <CircularProgress/>
+        return null
     }
 
-    function BibTextContents(props) {
-        if (!props.syncFinished) {
-            return null
-        } else if (props.bib_text === default_bib_text) {
+    function BibTextContents() {
+        if (syncStarted && !syncFinished) {
             return "Loading..."
-        } else {
+        } else if (syncFinished && bib_text !== default_bib_text) {
             return (
                 <Box>
                     <Button style={{float: 'right'}} variant={'outlined'}>Copy <ContentCopyIcon/></Button>
-                    {props.bib_text}
+                    {bib_text}
                 </Box>
             )
+        } else {
+            return null
         }
     }
 
-    if (props.username) {
-        // working on a reducing code duplication with one return
-        return (
-            <Box id={'sync'}>
-                <SyncButton show={!syncStarted || syncFinished}/>
-                <SyncProgress show={syncStarted && !syncFinished}/>
-                <Box className={'BibText'}>
-                    <BibTextContents syncFinished={syncFinished} bib_text={bib_text}/>
-                </Box>
+    return (
+        <Box id={'sync'}>
+            <SyncButton/>
+            <SyncProgress/>
+            <Box className={'BibText'}>
+                <BibTextContents bib_text={bib_text}/>
             </Box>
-        )
-    } else {
-        return "Loading..."
-    }
+        </Box>
+    )
 }
 
 function ReadingList(props) {

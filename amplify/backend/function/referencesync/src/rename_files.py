@@ -2,6 +2,7 @@ import pathlib
 import re
 
 from dropbox.files import FileMetadata, RelocationPath
+from tqdm import tqdm
 
 from citation_search import extract_citation_info
 
@@ -38,7 +39,7 @@ def extract_parts_for_renaming(citation_info):
 def extract_all_citation_info(dbx):
     res = dbx.files_list_folder('')
     citations_info = []
-    for file in res.entries:
+    for file in tqdm(res.entries):
         path = pathlib.Path(file.name)
         file_path: str = file.path_display
         if isinstance(file, FileMetadata):

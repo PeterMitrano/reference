@@ -12,6 +12,8 @@ boto3 = "*"
 dropbox = "*"
 "pdfminer.six" = "*"
 gql = "*"
+pydevd = "*"
+tqdm = "*"
 
 [requires]
 python_version = "3.8"
