@@ -9,6 +9,14 @@ export const sync = /* GraphQL */ `
     }
   }
 `;
+export const regenerate = /* GraphQL */ `
+  query Regenerate($dropbox_oauth_token: String) {
+    regenerate(dropbox_oauth_token: $dropbox_oauth_token) {
+      generated_at
+      text
+    }
+  }
+`;
 export const getPaper = /* GraphQL */ `
   query GetPaper($id: ID!) {
     getPaper(id: $id) {

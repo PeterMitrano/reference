@@ -36,21 +36,27 @@ def extract_parts_for_renaming(citation_info):
     return parts
 
 
-def extract_all_citation_info(dbx):
+def get_pdf_files(dbx):
     res = dbx.files_list_folder('')
-    citations_info = []
+
     for file in tqdm(res.entries[:6]):
         path = pathlib.Path(file.name)
         file_path: str = file.path_display
         if isinstance(file, FileMetadata):
             if path.suffix == '.pdf':
-                citation_info = extract_citation_info(dbx, file)
-                if citation_info is not None:
-                    citations_info.append((file_path, citation_info))
+                yield file, file_path
             else:
                 print(f"Skipping non-PDF file {file_path}")
         else:
             print(f"Skipping non-file {path}")
+
+
+def extract_all_citation_info(dbx):
+    citations_info = []
+    for pdf_file, file_path in get_pdf_files(dbx):
+        citation_info = extract_citation_info(dbx, pdf_file)
+        if citation_info is not None:
+            citations_info.append((file_path, citation_info))
     return citations_info
 
 

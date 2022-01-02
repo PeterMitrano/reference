@@ -10,6 +10,13 @@ from rename_files import extract_all_citation_info, rename_files
 
 
 def handler(event, context):
+    print(event)
+    print(context)
+    return {
+        'generated_at': str(int(time())),
+        'text': 'debugging',
+    }
+
     with RemoteDebugSession():
         args = event['arguments']
         dropbox_oauth_token = args['dropbox_oauth_token']

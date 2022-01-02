@@ -3,7 +3,7 @@ import {AmplifyAuthenticator, AmplifySignOut} from '@aws-amplify/ui-react'
 import {AuthState, onAuthUIStateChange} from '@aws-amplify/ui-components'
 
 import {API, graphqlOperation} from 'aws-amplify'
-import {listUsers, sync} from "./graphql/queries"
+import {listUsers, regenerate, sync} from "./graphql/queries"
 import {createUser} from "./graphql/mutations"
 import {useEffect, useState} from "react"
 import {Dropbox} from "dropbox"
@@ -59,13 +59,21 @@ function getDropboxAccessTokenFromUrl() {
 
 const dropbox_oauth_token_from_url = getDropboxAccessTokenFromUrl()
 
-async function myListUsers() {
+async function myGetUser(google_id) {
     try {
-        const list_users_result = await API.graphql(graphqlOperation(listUsers))
-        return list_users_result.data.listUsers.items
+        const variables = {
+            'filter': {'google_id': {'eq': google_id}},
+        }
+        const list_users_result = await API.graphql(graphqlOperation(listUsers, variables))
+        const items = list_users_result.data.listUsers.items
+        if (items.length == 1) {
+            return items[0]
+        }
+        return undefined
     } catch (err) {
         console.error("error checking if the current user has linked dropbox")
-        return []
+        console.error(err['errors'])
+        return undefined
     }
 }
 
@@ -81,6 +89,7 @@ function DropboxComponent(props) {
             setUrl(authUrl)
         } catch (err) {
             console.error('error getting auth url')
+            console.error(err['errors'])
         }
     }
 
@@ -94,14 +103,14 @@ function DropboxComponent(props) {
             await API.graphql(graphqlOperation(createUser, {input: user}))
         } catch (err) {
             console.error('error adding user')
+            console.error(err['errors'])
         }
     }
 
     async function check_dropbox_linked() {
-        const users = await myListUsers()
-        const google_ids = users.map(user => user['google_id'])
-        // console.log("checking if dropbox is linked")
-        const is_linked = google_ids.includes(props.username)
+        // if the user exists, their dropbox must be linked
+        const user = await myGetUser(props.username)
+        const is_linked = !!user && !!user['dropbox_oauth_token']
         // console.log("is_linked: " + is_linked)
         return is_linked
     }
@@ -112,7 +121,6 @@ function DropboxComponent(props) {
                 <Box sx={{m: 2}} id={'dropbox'} spacing={2}>
                     <Stack>
                         <Sync username={props.username}/>
-                        <ReadingList/>
                     </Stack>
                 </Box>
             )
@@ -155,48 +163,72 @@ function DropboxComponent(props) {
 function Sync(props) {
     const default_bib_text = 'Sync to see your bibtex'
     const [bib_text, setText] = useState(default_bib_text)
-    const [syncStarted, setSyncStarted] = useState(false)
-    const [syncFinished, setSyncFinished] = useState(false)
+    const [syncPending, setSyncPending] = useState(false)
+    const [regeneratePending, setRegeneratePending] = useState(false)
 
     async function call_sync() {
-        setSyncStarted(true)
+        setSyncPending(true)
         try {
-            const users = await myListUsers()
-            for (const user of users) {
-                if (user['google_id'] === props.username) {
-                    const dropbox_oauth_token = user['dropbox_oauth_token']
-                    const sync_args = {'dropbox_oauth_token': dropbox_oauth_token}
-                    const sync_result = await API.graphql(graphqlOperation(sync, sync_args))
-                    const sync_result_data = sync_result.data.sync
-                    const sync_result_text = sync_result_data['text']
-                    setText(sync_result_text)
-                }
+            const user = await myGetUser(props.username)
+            if (!!user && !!user['dropbox_oauth_token']) {
+                const dropbox_oauth_token = user['dropbox_oauth_token']
+                const sync_args = {'dropbox_oauth_token': dropbox_oauth_token}
+                const sync_result = await API.graphql(graphqlOperation(sync, sync_args))
+                const sync_result_data = sync_result.data.sync
+                const sync_result_text = sync_result_data['text']
+                setText(sync_result_text)
+            } else {
+                console.error("error syncing, couldn't get user")
             }
         } catch (err) {
             console.error('error fetching text')
+            console.error(err['errors'])
         } finally {
-            setSyncFinished(true)
+            setSyncPending(false)
+        }
+    }
+
+    async function call_regenerate() {
+        setRegeneratePending(true)
+        try {
+            const user = await myGetUser(props.username)
+            if (!!user && !!user['dropbox_oauth_token']) {
+                const dropbox_oauth_token = user['dropbox_oauth_token']
+                const regenerate_args = {'dropbox_oauth_token': dropbox_oauth_token}
+                const regenerate_result = await API.graphql(graphqlOperation(regenerate, regenerate_args))
+                const regenerate_result_data = regenerate_result.data.regenerate
+                const regenerate_result_text = regenerate_result_data['text']
+                setText(regenerate_result_text)
+            } else {
+                console.error("error regenerating, couldn't get user")
+            }
+        } catch (err) {
+            console.error('error fetching text')
+            console.error(err['errors'])
+        } finally {
+            setRegeneratePending(false)
         }
     }
 
     function SyncButton() {
-        if (!syncStarted || syncFinished) {
-            return <Button variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
-        }
-        return null
+        return <Button disabled={is_pending} variant={'outlined'} onClick={call_sync}>Sync & Regenerate</Button>
+    }
+
+    function RegenerateButton() {
+        return <Button disabled={is_pending} variant={'outlined'} onClick={call_regenerate}>Regenerate</Button>
     }
 
     function SyncProgress() {
-        if (syncStarted && !syncFinished) {
+        if (is_pending) {
             return <CircularProgress/>
         }
         return null
     }
 
     function BibTextContents() {
-        if (syncStarted && !syncFinished) {
+        if (is_pending) {
             return "Loading..."
-        } else if (syncFinished && bib_text !== default_bib_text) {
+        } else if (bib_text !== default_bib_text) {
             return (
                 <Box>
                     <Button style={{float: 'right'}} variant={'outlined'}>Copy <ContentCopyIcon/></Button>
@@ -208,9 +240,14 @@ function Sync(props) {
         }
     }
 
+    const is_pending = syncPending || regeneratePending
+
     return (
         <Box id={'sync'}>
-            <SyncButton/>
+            <Box id={'sync_buttons'}>
+                <SyncButton/>
+                <RegenerateButton/>
+            </Box>
             <SyncProgress/>
             <Box className={'BibText'}>
                 <BibTextContents bib_text={bib_text}/>
@@ -249,7 +286,10 @@ const AuthStateApp = () => {
     if (authState === AuthState.SignedIn && user) {
         return (<Box className="App">
             <MyAppBar/>
-            <DropboxComponent username={user.username}/>
+            <Box id={'main'}>
+                <DropboxComponent username={user.username}/>
+                <ReadingList/>
+            </Box>
         </Box>)
     } else {
         return (<AmplifyAuthenticator/>)

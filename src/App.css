@@ -43,6 +43,22 @@
     }
 }
 
+#dropbox {
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#sync_buttons {
+}
+
+#sync_buttons button {
+    margin: 8px;
+}
+
+#main {
+}
+
 .BibText {
     white-space: pre-line;
     border-color: #bfc2c2;
@@ -51,12 +67,9 @@
     border-radius: 10px;
     margin: 32px;
     padding: 16px;
-    width: 50%;
     min-height: 80px;
     color: #666666;
     background-color: #eceffc;
-    margin-left: auto;
-    margin-right: auto;
     text-align: left;
     font-family: monospace;
 }
