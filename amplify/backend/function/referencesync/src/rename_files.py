@@ -1,10 +1,6 @@
-import pathlib
 import re
 
-from dropbox.files import FileMetadata, RelocationPath
-from tqdm import tqdm
-
-from citation_search import extract_citation_info
+from dropbox.files import RelocationPath
 
 
 def shorten_title(title: str):
@@ -20,7 +16,7 @@ def shorten_title(title: str):
     return short_title
 
 
-def extract_parts_for_renaming(citation_info):
+def parts_for_renaming(citation_info):
     short_title = shorten_title(citation_info.title)
     if len(citation_info.authors) == 0:
         first_author_last_name = ''
@@ -30,34 +26,10 @@ def extract_parts_for_renaming(citation_info):
     parts = {
         'short_title': short_title,
         'first_author_last_name': first_author_last_name,
-        'year': citation_info.year,
+        'year': str(citation_info.year),
     }
 
     return parts
-
-
-def get_pdf_files(dbx, max_files):
-    res = dbx.files_list_folder('')
-
-    for file in tqdm(res.entries[:max_files]):
-        path = pathlib.Path(file.name)
-        file_path: str = file.path_display
-        if isinstance(file, FileMetadata):
-            if path.suffix == '.pdf':
-                yield file, file_path
-            else:
-                print(f"Skipping non-PDF file {file_path}")
-        else:
-            print(f"Skipping non-file {path}")
-
-
-def extract_all_citation_info(dbx, max_files):
-    citations_info = []
-    for pdf_file, file_path in get_pdf_files(dbx, max_files):
-        citation_info = extract_citation_info(dbx, pdf_file)
-        if citation_info is not None:
-            citations_info.append((file_path, citation_info))
-    return citations_info
 
 
 def rename_file(original_path, citation_info):
@@ -67,33 +39,11 @@ def rename_file(original_path, citation_info):
         'year',
     ]
 
-    parts = extract_parts_for_renaming(citation_info)
-    if parts is None:
-        print(f"Couldn't find info for {original_path}, skipping")
-        return None, original_path
+    parts = parts_for_renaming(citation_info)
 
     parts = [parts[part_name] for part_name in part_names]
     new_path = '/' + '_'.join(parts) + '.pdf'
     new_path = new_path.replace(" ", "-")
 
-    # print(f"{original_path} -> {new_path}")
     relocation_path = RelocationPath(from_path=original_path, to_path=new_path)
-    return relocation_path, new_path
-
-
-def rename_files(dbx, citations_info):
-    relocation_paths = []
-    citations_info_renamed = []
-    print("Renaming files")
-    for original_path, citation_info in tqdm(citations_info):
-        relocation_path, new_path = rename_file(original_path, citation_info)
-        if relocation_path is not None:
-            relocation_paths.append(relocation_path)
-        citations_info_renamed.append((new_path, citation_info))
-
-    if len(relocation_paths) > 0:
-        # FIXME: error handling here?
-        print("relocating files")
-        dbx.files_move_batch_v2(relocation_paths)
-
-    return citations_info_renamed
+    return relocation_path

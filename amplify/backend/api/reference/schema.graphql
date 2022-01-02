@@ -3,13 +3,13 @@
 input AMPLIFY { globalAuthRule: AuthRule = { allow: public } } # FOR TESTING ONLY!
 
 type Paper @model {
-    id: ID!
-    filename: String!
+    file_path: String!
     dropbox_oauth_token: String!
     title: String!
     authors: [String]!
     year: Int!
     venue: String!
+    confidence: Float!
 }
 
 type SyncResult {
@@ -24,6 +24,6 @@ type User @model {
 
 
 type Query {
-    sync(dropbox_oauth_token: String, max_files: Int): SyncResult @function(name: "referencesync-${env}")
+    sync(dropbox_oauth_token: String): SyncResult @function(name: "referencesync-${env}")
     regenerate(dropbox_oauth_token: String): SyncResult @function(name: "referencesync-${env}")
 }

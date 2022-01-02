@@ -4,13 +4,14 @@
 export const onCreatePaper = /* GraphQL */ `
   subscription OnCreatePaper {
     onCreatePaper {
-      id
-      filename
+      file_path
       dropbox_oauth_token
       title
       authors
       year
       venue
+      confidence
+      id
       createdAt
       updatedAt
     }
@@ -19,13 +20,14 @@ export const onCreatePaper = /* GraphQL */ `
 export const onUpdatePaper = /* GraphQL */ `
   subscription OnUpdatePaper {
     onUpdatePaper {
-      id
-      filename
+      file_path
       dropbox_oauth_token
       title
       authors
       year
       venue
+      confidence
+      id
       createdAt
       updatedAt
     }
@@ -34,13 +36,14 @@ export const onUpdatePaper = /* GraphQL */ `
 export const onDeletePaper = /* GraphQL */ `
   subscription OnDeletePaper {
     onDeletePaper {
-      id
-      filename
+      file_path
       dropbox_oauth_token
       title
       authors
       year
       venue
+      confidence
+      id
       createdAt
       updatedAt
     }

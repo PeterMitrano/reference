@@ -2,8 +2,8 @@
 // this is an auto generated file. This will be overwritten
 
 export const sync = /* GraphQL */ `
-  query Sync($dropbox_oauth_token: String, $max_files: Int) {
-    sync(dropbox_oauth_token: $dropbox_oauth_token, max_files: $max_files) {
+  query Sync($dropbox_oauth_token: String) {
+    sync(dropbox_oauth_token: $dropbox_oauth_token) {
       generated_at
       text
     }
@@ -20,13 +20,14 @@ export const regenerate = /* GraphQL */ `
 export const getPaper = /* GraphQL */ `
   query GetPaper($id: ID!) {
     getPaper(id: $id) {
-      id
-      filename
+      file_path
       dropbox_oauth_token
       title
       authors
       year
       venue
+      confidence
+      id
       createdAt
       updatedAt
     }
@@ -40,13 +41,14 @@ export const listPapers = /* GraphQL */ `
   ) {
     listPapers(filter: $filter, limit: $limit, nextToken: $nextToken) {
       items {
-        id
-        filename
+        file_path
         dropbox_oauth_token
         title
         authors
         year
         venue
+        confidence
+        id
         createdAt
         updatedAt
       }

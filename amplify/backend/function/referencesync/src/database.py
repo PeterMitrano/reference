@@ -1,18 +1,15 @@
+import json
 import os
 
 import boto3
-import json
-from typing import Tuple, List
-
 import requests
-from tqdm import tqdm
 
-from citation_search import CitationInfo
+from citation_search import DEFAULT_CONFIDENCE_THRESHOLD
 
 
 def delete_papers(dropbox_oauth_token):
     """ delete all papers by first listing all papers, then deleting each one """
-    papers = list_papers_for_token(dropbox_oauth_token)
+    papers = list_papers_for_token_with_confidence(dropbox_oauth_token, threshold=-1)  # -1 will return _all_ papers
     if papers is None:
         print("Listing papers for the user failed")
         return
@@ -35,52 +32,77 @@ def delete_papers(dropbox_oauth_token):
     return success
 
 
-def update_papers_table(citations_info: List[Tuple[str, CitationInfo]], dropbox_oauth_token):
-    # FIXME: this could create duplicates
-    print("Updating papers table")
-    for file_path, citation_info in tqdm(citations_info):
-        # NOTE: this was copied directly from mutations.js, maybe we can do all of this automatically during codegen?
-        mutate_query_str = """
-          mutation CreatePaper(
-            $input: CreatePaperInput!
-            $condition: ModelPaperConditionInput
-          ) {
-            createPaper(input: $input, condition: $condition) {
-              id
-              filename
-              dropbox_oauth_token
-              title
-              authors
-              year
-              venue
-              createdAt
-              updatedAt
-            }
-          }
-        """
-        variables = {
-            'input': {
-                'filename': file_path,
-                'dropbox_oauth_token': dropbox_oauth_token,
-                'title': citation_info.title,
-                'authors': citation_info.authors,
-                'year': int(citation_info.year),
-                'venue': citation_info.venue,
+def check_paper(dropbox_oauth_token, file_path):
+    check_str = """query MyQuery($token: String, $path: String) {
+        listPapers(filter: {dropbox_oauth_token: {eq: $token}, file_path: {eq: $path}}) {
+            items {
+                title
             }
         }
-        mutate = {
-            'query': mutate_query_str,
-            'variables': variables,
+    }"""
+    query = {
+        'query': check_str,
+        'variables': {
+            'token': dropbox_oauth_token,
+            'path': file_path,
+        },
+    }
+    list_data = graphql_operation(query)
+
+    if list_data is None:
+        return None
+
+    n_matches = len(list_data['listPapers']['items'])
+    if n_matches > 1:
+        print("Duplicate papers detected!!!")
+    exists = (n_matches > 0)
+    return exists
+
+
+def create_paper(file_path, citation_info, dropbox_oauth_token):
+    mutate_query_str = """
+      mutation CreatePaper(
+        $input: CreatePaperInput!
+        $condition: ModelPaperConditionInput
+      ) {
+        createPaper(input: $input, condition: $condition) {
+          file_path
+          dropbox_oauth_token
+          title
+          authors
+          year
+          venue
+          createdAt
+          updatedAt
         }
-        mutate_data = graphql_operation(mutate)
-        if mutate_data is None:
-            print("Failed to create paper")
-            continue
+      }
+    """
+    variables = {
+        'input': {
+            'file_path': file_path,
+            'dropbox_oauth_token': dropbox_oauth_token,
+            'title': citation_info.title,
+            'authors': citation_info.authors,
+            'year': int(citation_info.year),
+            'venue': citation_info.venue,
+            'confidence': citation_info.confidence,
+        }
+    }
+    mutate = {
+        'query': mutate_query_str,
+        'variables': variables,
+    }
+    mutate_data = graphql_operation(mutate)
+    if mutate_data is None:
+        print("Failed to create paper")
+        return False
+
+    return True
 
 
-def list_papers_for_token(dropbox_oauth_token):
-    list_papers_for_token_str = """query MyQuery($token: String) {
-        listPapers(filter: {dropbox_oauth_token: {eq: $token}}) {
+def list_papers_for_token_with_confidence(dropbox_oauth_token, threshold=DEFAULT_CONFIDENCE_THRESHOLD):
+    list_papers_for_token_str = """query MyQuery($token: String, $threshold: Float) {
+        listPapers(filter: {dropbox_oauth_token: {eq: $token}, confidence: {gt: $threshold}}) {
             items {
                 id
                 title
@@ -94,6 +116,7 @@ def list_papers_for_token(dropbox_oauth_token):
         'query': list_papers_for_token_str,
         'variables': {
             'token': dropbox_oauth_token,
+            'threshold': threshold,
         },
     }
     list_data = graphql_operation(query)
@@ -108,13 +131,13 @@ def list_papers_for_token(dropbox_oauth_token):
 def graphql_operation(graphql_op, force_local=False):
     op_data = json.dumps(graphql_op)
 
-    is_local_env = (os.environ.get('HOSTNAME') == 'Einstein')
+    amplify_env = os.environ.get('ENV')
+    is_local_env = (amplify_env is None)
     if is_local_env or force_local:
         # taken from src/aws-exports.js under aws_appsync_apiKey
         api_key = "da2-fakeApiId123456"
         graphql_endpoint = "http://192.168.1.25:20002/graphql"
     else:
-        amplify_env = os.environ.get('ENV', 'dev')
         ssm = boto3.client('ssm')
         parameter = ssm.get_parameter(
             Name=f'/amplify/d2lw19uzgyfl97/{amplify_env}/AMPLIFY_referencesync_reference_api_key',
@@ -130,6 +153,14 @@ def graphql_operation(graphql_op, force_local=False):
     res = requests.post(graphql_endpoint, data=op_data, headers=headers)
 
     # Error handling
-    if res.ok and (data := res.json().get('data')) is not None:
+    if not res.ok:
+        print(f"res not ok, {res.status_code=}")
+        return None
+
+    res_json = res.json()
+    data = res_json.get('data')
+    if data is not None:
         return data
+
+    print("Error: ", res_json)
     return None

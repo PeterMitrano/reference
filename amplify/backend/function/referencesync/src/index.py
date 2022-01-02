@@ -4,8 +4,10 @@ from time import time
 from dropbox import Dropbox
 
 from bib import generate_bib
-from database import update_papers_table, delete_papers
-from rename_files import extract_all_citation_info, rename_files
+from citation_search import extract_citation_info, DEFAULT_CONFIDENCE_THRESHOLD
+from database import check_paper, create_paper
+from dropbox_utils import get_pdf_files
+from rename_files import rename_file
 
 
 def get_dropbox_token(event):
@@ -14,36 +16,38 @@ def get_dropbox_token(event):
     return dropbox_oauth_token
 
 
-def get_max_files(event):
-    max_files = event['arguments'].get('max_files', -1)
-    if max_files is None:
-        return -1
-    else:
-        return int(max_files)
+def update_papers_table(dbx, dropbox_oauth_token):
+    relocation_paths = []
+    for pdf_file, original_path in get_pdf_files(dbx):
+        exists = check_paper(dropbox_oauth_token, original_path)
+        if not exists:
+            citation_info = extract_citation_info(dbx, pdf_file)
+
+            if citation_info.confidence > DEFAULT_CONFIDENCE_THRESHOLD:
+                relocation_path = rename_file(original_path, citation_info)
+                if relocation_path.from_path != relocation_path.to_path:
+                    relocation_paths.append(relocation_path)
+                new_path = relocation_path.from_path
+            else:
+                new_path = original_path
+
+            create_paper(new_path, citation_info, dropbox_oauth_token)
+
+    # finally, run all the RelocationPath calls
+    if len(relocation_paths) > 0:
+        # FIXME: error handling here?
+        print("relocating files")
+        dbx.files_move_batch_v2(relocation_paths)
 
 
 def sync(event):
     dropbox_oauth_token = get_dropbox_token(event)
-    max_files = get_max_files(event)
-
-    print(max_files)
-
-    success = delete_papers(dropbox_oauth_token)
-    if not success:
-        print("Failed to delete papers")
-        return ''
 
     with Dropbox(oauth2_access_token=dropbox_oauth_token) as dbx:
-        citations_info = extract_all_citation_info(dbx, max_files)
-        citations_info = rename_files(dbx, citations_info)
-
-    update_papers_table(citations_info, dropbox_oauth_token)
+        update_papers_table(dbx, dropbox_oauth_token)
 
     bib_text = generate_bib(dropbox_oauth_token)
 
-    # TODO: update the user to store the latest bib text?
-
-    print('returning bib_text')
     return {
         'generated_at': str(int(time())),
         'text': bib_text,

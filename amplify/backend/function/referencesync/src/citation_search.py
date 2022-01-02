@@ -5,13 +5,19 @@ import requests
 
 from pdf import extract_standardized_metadata
 
+DEFAULT_CONFIDENCE_THRESHOLD = 0.5
+
 
 @dataclass
 class CitationInfo:
     title: str
     authors: List[str]
     venue: str
-    year: str
+    year: int
+    confidence: float
+
+
+NO_CITATION_INFO = CitationInfo(title='', authors=[], venue='', year=0, confidence=0.0)
 
 
 def search_semantic_scholar_with_query(query):
@@ -33,7 +39,7 @@ def search_semantic_scholar_with_query(query):
 def search_for_citation_info(title, author):
     query_res = search_semantic_scholar(title, author)
     if query_res is None:
-        return None
+        return NO_CITATION_INFO
 
     first_paper_res = query_res['data'][0]
 
@@ -46,13 +52,14 @@ def search_for_citation_info(title, author):
 
     authors = [author_info['name'] for author_info in first_paper_res['authors']]
     venue = first_paper_res['venue']
-    year = str(first_paper_res['year'])
+    year = first_paper_res['year']
 
     return CitationInfo(
         title=title,
         authors=authors,
         venue=venue,
         year=year,
+        confidence=1.0,
     )
 
 
@@ -82,7 +89,7 @@ def search_semantic_scholar(title, author):
 def extract_citation_info(dbx, file):
     pdf_metadata = extract_standardized_metadata(dbx, file)
     if pdf_metadata is None:
-        return None
+        return NO_CITATION_INFO
     # NOTE: we need a fallback for when the title and author are blank!
     #  perhaps take in a whole slew of features here and use ML to determine title and author,
     #  then do semantic scholar search?

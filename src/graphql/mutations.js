@@ -7,13 +7,14 @@ export const createPaper = /* GraphQL */ `
     $condition: ModelPaperConditionInput
   ) {
     createPaper(input: $input, condition: $condition) {
-      id
-      filename
+      file_path
       dropbox_oauth_token
       title
       authors
       year
       venue
+      confidence
+      id
       createdAt
       updatedAt
     }
@@ -25,13 +26,14 @@ export const updatePaper = /* GraphQL */ `
     $condition: ModelPaperConditionInput
   ) {
     updatePaper(input: $input, condition: $condition) {
-      id
-      filename
+      file_path
       dropbox_oauth_token
       title
       authors
       year
       venue
+      confidence
+      id
       createdAt
       updatedAt
     }
@@ -43,13 +45,14 @@ export const deletePaper = /* GraphQL */ `
     $condition: ModelPaperConditionInput
   ) {
     deletePaper(input: $input, condition: $condition) {
-      id
-      filename
+      file_path
       dropbox_oauth_token
       title
       authors
       year
       venue
+      confidence
+      id
       createdAt
       updatedAt
     }
