@@ -120,6 +120,7 @@ def graphql_operation(graphql_op, force_local=False):
             Name=f'/amplify/d2lw19uzgyfl97/{amplify_env}/AMPLIFY_referencesync_reference_api_key',
             WithDecryption=True)
         api_key = parameter['Parameter']['Value']
+        # NOTE: maybe we should retrieve the value from aws-config?
         graphql_endpoint = "https://idmuuu5euvhflkxgdjq4mq7ryu.appsync-api.us-east-1.amazonaws.com/graphql"
 
     headers = {
