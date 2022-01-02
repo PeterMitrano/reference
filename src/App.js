@@ -167,6 +167,7 @@ function Sync(props) {
                     const dropbox_oauth_token = user['dropbox_oauth_token']
                     const sync_args = {'dropbox_oauth_token': dropbox_oauth_token}
                     const sync_result = await API.graphql(graphqlOperation(sync, sync_args))
+                    console.log(sync_result)
                     const sync_result_data = sync_result.data.sync
                     const sync_result_text = sync_result_data['text']
                     setText(sync_result_text)
