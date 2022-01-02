@@ -80,4 +80,4 @@ def handler(event, context):
 if __name__ == '__main__':
     with open('event.json') as f:
         event = json.load(f)
-    handler(event, None)
+    print(handler(event, None))

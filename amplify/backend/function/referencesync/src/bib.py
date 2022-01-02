@@ -5,6 +5,8 @@ def generate_bib(dropbox_oauth_token):
     papers = list_papers_for_token_with_confidence(dropbox_oauth_token)
     if papers is None:
         print("Listing papers for the user failed")
+        return None
+
     print(f"Found {len(papers)} papers")
 
     entries = []

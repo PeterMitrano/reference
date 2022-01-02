@@ -1,5 +1,6 @@
 import json
 import os
+import socket
 
 import boto3
 import requests
@@ -104,7 +105,6 @@ def list_papers_for_token_with_confidence(dropbox_oauth_token, threshold=DEFAULT
     list_papers_for_token_str = """query MyQuery($token: String, $threshold: Float) {
         listPapers(filter: {dropbox_oauth_token: {eq: $token}, confidence: {gt: $threshold}}) {
             items {
-                id
                 title
                 year
                 venue
@@ -132,7 +132,8 @@ def graphql_operation(graphql_op, force_local=False):
     op_data = json.dumps(graphql_op)
 
     amplify_env = os.environ.get('ENV')
-    is_local_env = (amplify_env is None)
+    hostname = socket.gethostname()
+    is_local_env = (hostname == 'Einstein')
     if is_local_env or force_local:
         # taken from src/aws-exports.js under aws_appsync_apiKey
         api_key = "da2-fakeApiId123456"

@@ -18,7 +18,8 @@ def download_from_dropbox(dbx, path):
 def get_pdf_files(dbx):
     res = dbx.files_list_folder('')
 
-    for file in tqdm(res.entries):
+    for i, file in enumerate(res.entries):
+        print(f"{i}/{len(res.entries)}")
         path = pathlib.Path(file.name)
         file_path: str = file.path_display
         if isinstance(file, FileMetadata):

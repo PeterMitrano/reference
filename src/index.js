@@ -8,9 +8,8 @@ import Amplify from "aws-amplify";
 import awsExports from "./aws-exports";
 
 // The redirectSignIn/Out is normally defined in aws-exports.js,
-// but there's no good way to make that work in both local dev and production envs
-// this this is a workaround.
-// copied from https://github.com/aws-amplify/amplify-cli/issues/2792
+// but there's no good way to make that work in both localhost and dev/prod envs
+// this is a workaround. copied from https://github.com/aws-amplify/amplify-cli/issues/2792
 // NOTE: another solution could be to use a `prod` branch where we hardcode these values
 // and hardcode them differently on master (for local dev)
 awsExports.oauth.redirectSignIn = `${window.location.origin}/`
