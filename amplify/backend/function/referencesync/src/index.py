@@ -26,6 +26,9 @@ def handler(event, context):
         update_papers_table(citations_info, dropbox_oauth_token)
 
         bib_text = generate_bib(dropbox_oauth_token)
+
+        # TODO: update the user to store the latest bib text?
+
         print('returning bib_text')
         return {
             'generated_at': str(int(time())),

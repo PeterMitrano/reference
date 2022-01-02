@@ -17,7 +17,6 @@ def generate_bib(dropbox_oauth_token):
         entries.append(entry_str)
 
     full_bib_str = '\n'.join(entries)
-    print(full_bib_str)
 
     return full_bib_str
 

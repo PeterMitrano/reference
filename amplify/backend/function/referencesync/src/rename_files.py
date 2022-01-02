@@ -39,7 +39,7 @@ def extract_parts_for_renaming(citation_info):
 def extract_all_citation_info(dbx):
     res = dbx.files_list_folder('')
     citations_info = []
-    for file in tqdm(res.entries):
+    for file in tqdm(res.entries[:6]):
         path = pathlib.Path(file.name)
         file_path: str = file.path_display
         if isinstance(file, FileMetadata):
