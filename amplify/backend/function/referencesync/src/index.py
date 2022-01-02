@@ -15,7 +15,7 @@ def get_dropbox_token(event):
 
 
 def get_max_files(event):
-    max_files = event['arguments']['max_files']
+    max_files = event['arguments'].get('max_files', -1)
     if max_files:
         return -1
     else:
@@ -25,6 +25,8 @@ def get_max_files(event):
 def sync(event):
     dropbox_oauth_token = get_dropbox_token(event)
     max_files = get_max_files(event)
+
+    print(max_files)
 
     success = delete_papers(dropbox_oauth_token)
     if not success:
