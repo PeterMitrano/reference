@@ -3,8 +3,10 @@ from typing import List
 
 import requests
 
+from logging_utils import get_logger
 from pdf import extract_standardized_metadata
 
+logger = get_logger(__file__)
 DEFAULT_CONFIDENCE_THRESHOLD = 0.5
 
 
@@ -30,8 +32,8 @@ def search_semantic_scholar_with_query(query):
     }
     res = requests.get(search_url, params)
     if not res.ok:
-        print("Semantic scholar query failed")
-        print(res.text)
+        logger.warn("Semantic scholar query failed")
+        logger.warn(res.text)
         return None
     return res
 
@@ -65,7 +67,7 @@ def search_for_citation_info(title, author):
 
 def search_semantic_scholar(title, author):
     if title == '' and author == '':
-        print("No title or author")
+        logger.warn("No title or author")
         return None
 
     res = search_semantic_scholar_with_query(title + ' ' + author)

@@ -1,18 +1,21 @@
 import json
 import os
 import socket
+from functools import lru_cache
 
-import boto3
 import requests
 
 from citation_search import DEFAULT_CONFIDENCE_THRESHOLD
+from logging_utils import get_logger
+
+logger = get_logger(__file__)
 
 
 def delete_papers(dropbox_oauth_token):
     """ delete all papers by first listing all papers, then deleting each one """
     papers = list_papers_for_token_with_confidence(dropbox_oauth_token, threshold=-1)  # -1 will return _all_ papers
     if papers is None:
-        print("Listing papers for the user failed")
+        logger.error("Listing papers for the user failed")
         return
 
     success = True
@@ -27,7 +30,7 @@ def delete_papers(dropbox_oauth_token):
         del_data = graphql_operation(query)
         if del_data is None:
             success = False
-            print("Failed deleting paper")
+            logger.warn("Failed deleting paper")
             continue
 
     return success
@@ -55,7 +58,7 @@ def check_paper(dropbox_oauth_token, file_path):
 
     n_matches = len(list_data['listPapers']['items'])
     if n_matches > 1:
-        print("Duplicate papers detected!!!")
+        logger.warn("Duplicate papers detected!!!")
     exists = (n_matches > 0)
     return exists
 
@@ -99,7 +102,7 @@ def create_paper(dropbox_oauth_token, file_path, citation_info):
     }
     mutate_data = graphql_operation(mutate)
     if mutate_data is None:
-        print("Failed to create paper")
+        logger.error("Failed to create paper")
         return False
 
     return True
@@ -141,7 +144,31 @@ def get_appsync_graphql_endpoint():
 def graphql_operation(graphql_op, force_local=False):
     op_data = json.dumps(graphql_op)
 
-    amplify_env = os.environ.get('ENV')
+    api_key, graphql_endpoint = get_api_info(force_local)
+
+    headers = {
+        'Content-type': 'application/json',
+        'x-api-key': api_key,
+    }
+    res = requests.post(graphql_endpoint, data=op_data, headers=headers)
+
+    # Error handling
+    if not res.ok:
+        logger.error(f"res not ok, {res.status_code=}")
+        logger.error(res.text)
+        return None
+
+    res_json = res.json()
+    data = res_json.get('data')
+    if data is not None:
+        return data
+
+    logger.error("Error: ", res_json)
+    return None
+
+
+@lru_cache
+def get_api_info(force_local):
     hostname = socket.gethostname()
     is_local_env = (hostname == 'Einstein')
     if is_local_env or force_local:
@@ -151,23 +178,5 @@ def graphql_operation(graphql_op, force_local=False):
     else:
         graphql_endpoint, api_key = get_appsync_graphql_endpoint()
 
-    print(f"{graphql_endpoint=} {api_key=}")
-    headers = {
-        'Content-type': 'application/json',
-        'x-api-key': api_key,
-    }
-    res = requests.post(graphql_endpoint, data=op_data, headers=headers)
-
-    # Error handling
-    if not res.ok:
-        print(f"res not ok, {res.status_code=}")
-        print(res.text)
-        return None
-
-    res_json = res.json()
-    data = res_json.get('data')
-    if data is not None:
-        return data
-
-    print("Error: ", res_json)
-    return None
+    logger.debug(f"{graphql_endpoint=} {api_key=}")
+    return api_key, graphql_endpoint

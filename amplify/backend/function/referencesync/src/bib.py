@@ -1,13 +1,16 @@
 from database import list_papers_for_token_with_confidence
+from logging_utils import get_logger
+
+logger = get_logger(__file__)
 
 
 def generate_bib(dropbox_oauth_token):
     papers = list_papers_for_token_with_confidence(dropbox_oauth_token)
     if papers is None:
-        print("Listing papers for the user failed")
+        logger.error("Listing papers for the user failed")
         return None
 
-    print(f"Found {len(papers)} papers")
+    logger.debug(f"Found {len(papers)} papers")
 
     entries = []
     for paper in papers:

@@ -7,7 +7,10 @@ from bib import generate_bib
 from citation_search import extract_citation_info, DEFAULT_CONFIDENCE_THRESHOLD
 from database import check_paper, create_paper
 from dropbox_utils import get_pdf_files
+from logging_utils import get_logger
 from rename_files import rename_file
+
+logger = get_logger(__file__)
 
 
 def get_dropbox_token(event):
@@ -36,7 +39,7 @@ def update_papers_table(dbx, dropbox_oauth_token):
     # finally, run all the RelocationPath calls
     if len(relocation_paths) > 0:
         # FIXME: error handling here?
-        print("relocating files")
+        logger.info("relocating files")
         dbx.files_move_batch_v2(relocation_paths)
 
 
