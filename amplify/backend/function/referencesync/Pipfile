@@ -15,6 +15,9 @@ gql = "*"
 pydevd = "*"
 tqdm = "*"
 pyyaml = "*"
+atoma = "*"
+arxiv = "*"
+numpy = "*"
 
 [requires]
 python_version = "3.8"
