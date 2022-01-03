@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@aws-amplify/cli": "^7.6.5",
     "@aws-amplify/ui-react": "^1.2.26",
     "@craco/craco": "^6.4.3",
     "@emotion/react": "^11.7.1",
