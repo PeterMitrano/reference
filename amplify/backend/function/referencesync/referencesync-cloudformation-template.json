@@ -213,6 +213,7 @@
           ]
         },
         "Runtime": "python3.8",
+        "MemorySize": "1024",
         "Layers": [],
         "Timeout": 900
       }
