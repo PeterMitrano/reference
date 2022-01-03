@@ -50,8 +50,7 @@
         "referencesync": {
           "secretsPathAmplifyAppId": "d2lw19uzgyfl97",
           "deploymentBucketName": "amplify-reference-prod-165021-deployment",
-          "s3Key": "amplify-builds/referencesync-712f2f38656c4478664d-build.zip",
-          "awsAppsyncGraphqlEndpoint": "https://5gwnq6v5lfgsnm6wqfy6kjgxhu.appsync-api.us-east-1.amazonaws.com/graphql"
+          "s3Key": "amplify-builds/referencesync-6a6a50777a30476d4846-build.zip"
         }
       },
       "hosting": {

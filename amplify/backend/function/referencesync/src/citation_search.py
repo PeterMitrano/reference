@@ -87,6 +87,13 @@ def search_semantic_scholar(title, author):
 
 
 def extract_citation_info(dbx, file):
+    # the general architecture could be to first try to extract pdf metadata
+    # then also try to extract text from PDF and use that
+    # then use the file name (cites like arxiv have a reliable naming policy)
+    # then we need to somehow combine all of that information into a series of queries to semantic scholar
+    # then we need to rank the results and choose the best one
+
+    # I'd like to train this system from data
     pdf_metadata = extract_standardized_metadata(dbx, file)
     if pdf_metadata is None:
         return NO_CITATION_INFO

@@ -166,6 +166,7 @@ def graphql_operation(graphql_op, force_local=False):
     # Error handling
     if not res.ok:
         print(f"res not ok, {res.status_code=}")
+        print(res.text)
         return None
 
     res_json = res.json()
