@@ -60,7 +60,11 @@ def check_paper(dropbox_oauth_token, file_path):
     return exists
 
 
-def create_paper(file_path, citation_info, dropbox_oauth_token):
+def create_paper(dropbox_oauth_token, file_path, citation_info):
+    exists = check_paper(dropbox_oauth_token, file_path)
+    if exists:
+        return
+
     mutate_query_str = """
       mutation CreatePaper(
         $input: CreatePaperInput!

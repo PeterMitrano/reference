@@ -31,7 +31,7 @@ def update_papers_table(dbx, dropbox_oauth_token):
             else:
                 new_path = original_path
 
-            create_paper(new_path, citation_info, dropbox_oauth_token)
+            create_paper(dropbox_oauth_token, new_path, citation_info)
 
     # finally, run all the RelocationPath calls
     if len(relocation_paths) > 0:
