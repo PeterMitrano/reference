@@ -17,5 +17,11 @@
     "dropbox_app_key",
     "dropbox_app_secret",
     "reference_api_key"
+  ],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "awsAppsyncGraphqlEndpoint",
+      "environmentVariableName": "aws_appsync_graphqlEndpoint"
+    }
   ]
 }

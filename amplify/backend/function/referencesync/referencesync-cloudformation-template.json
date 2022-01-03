@@ -22,6 +22,9 @@
     },
     "secretsPathAmplifyAppId": {
       "Type": "String"
+    },
+    "awsAppsyncGraphqlEndpoint": {
+      "Type": "String"
     }
   },
   "Conditions": {
@@ -197,6 +200,9 @@
                   "reference_api_key"
                 ]
               ]
+            },
+            "aws_appsync_graphqlEndpoint": {
+              "Ref": "awsAppsyncGraphqlEndpoint"
             }
           }
         },

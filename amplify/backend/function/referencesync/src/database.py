@@ -135,6 +135,7 @@ def list_papers_for_token_with_confidence(dropbox_oauth_token, threshold=DEFAULT
 def graphql_operation(graphql_op, force_local=False):
     op_data = json.dumps(graphql_op)
 
+    # FIXME:
     amplify_env = os.environ.get('ENV')
     hostname = socket.gethostname()
     is_local_env = (hostname == 'Einstein')
