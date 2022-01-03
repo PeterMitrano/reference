@@ -28,7 +28,9 @@
           "category": "api",
           "resourceName": "reference",
           "attributes": [
-            "GraphQLAPIIdOutput"
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
           ]
         }
       ]

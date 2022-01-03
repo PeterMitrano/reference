@@ -1,5 +1,12 @@
 {
   "permissions": {
+    "api": {
+      "reference": [
+        "Query",
+        "Mutation",
+        "Subscription"
+      ]
+    },
     "storage": {
       "Paper:@model(appsync)": [
         "create",
@@ -8,7 +15,10 @@
         "delete"
       ],
       "User:@model(appsync)": [
-        "read"
+        "create",
+        "read",
+        "update",
+        "delete"
       ]
     }
   },
