@@ -3,16 +3,28 @@ import {AmplifyAuthenticator, AmplifySignOut} from '@aws-amplify/ui-react'
 import {AuthState, onAuthUIStateChange} from '@aws-amplify/ui-components'
 
 import {API, graphqlOperation} from 'aws-amplify'
-import {listUsers, regenerate, sync} from "./graphql/queries"
+import {listUsers, sync, regenerate} from "./graphql/queries"
 import {createUser} from "./graphql/mutations"
 import {useEffect, useState} from "react"
 import {Dropbox} from "dropbox"
 
 // UI
 import Button from '@mui/material/Button'
-import {AppBar, Box, CircularProgress, Stack, Toolbar, Typography} from "@mui/material"
-import awsExports from "./aws-exports";
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import {
+    AppBar,
+    Box,
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Stack,
+    Toolbar,
+    Typography
+} from "@mui/material"
+import awsExports from "./aws-exports"
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 
 
 function parseQueryString(str) {
@@ -160,11 +172,41 @@ function DropboxComponent(props) {
     }
 }
 
+function TimeoutDialog(props) {
+    return (
+        <Dialog
+            open={props.open}
+            onClose={props.handleClose}
+            aria-labelledby="timeout-title"
+            aria-describedby="timeout-description">
+            <DialogTitle id="timeout-title">Sync Timeout</DialogTitle>
+            <DialogContent>
+                <DialogContentText id="timeout-description">
+                    This sync is taking a long time.
+                    Please wait a minute for it to complete, then try again.
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={props.handleClose} autoFocus>Ok</Button>
+            </DialogActions>
+        </Dialog>
+    )
+}
+
 function Sync(props) {
     const default_bib_text = 'Sync to see your bibtex'
     const [bib_text, setText] = useState(default_bib_text)
     const [syncPending, setSyncPending] = useState(false)
     const [regeneratePending, setRegeneratePending] = useState(false)
+    const [timeoutDialogOpen, setTimeoutDialogTimeoutDialogOpen] = useState(false)
+
+    function handleTimeout() {
+        setTimeoutDialogTimeoutDialogOpen(true)
+    }
+
+    function handleCloseTimeout() {
+        setTimeoutDialogTimeoutDialogOpen(false)
+    }
 
     async function call_sync() {
         setSyncPending(true)
@@ -181,7 +223,16 @@ function Sync(props) {
             }
         } catch (err) {
             console.error('error fetching text')
-            console.error(err['errors'])
+            if ('errors' in err) {
+                const errors = err['errors']
+                if (errors.length === 1) {
+                    const error = errors[0]
+                    if (error['errorType'] === 'ExecutionTimeout') {
+                        // tell the user what happened and what to do
+                        handleTimeout()
+                    }
+                }
+            }
         } finally {
             setSyncPending(false)
         }
@@ -250,6 +301,7 @@ function Sync(props) {
             <Box className={'BibText'}>
                 <BibTextContents bib_text={bib_text}/>
             </Box>
+            <TimeoutDialog open={timeoutDialogOpen} handleOpen={handleTimeout} handleClose={handleCloseTimeout}/>
         </Box>
     )
 }
