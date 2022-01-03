@@ -132,6 +132,14 @@ def list_papers_for_token_with_confidence(dropbox_oauth_token, threshold=DEFAULT
     return papers
 
 
+def get_appsync_graphql_endpoint(amplify_env):
+    api_id = os.environ['API_REFERENCE_GRAPHQLAPIIDOUTPUT']
+    client = boto3.client('appsync')
+    api = client.get_graphql_api(api_id)
+    print(api['graphqlApi']['uris'])
+    return 'fake_endpoint'
+
+
 def graphql_operation(graphql_op, force_local=False):
     op_data = json.dumps(graphql_op)
 
@@ -144,13 +152,13 @@ def graphql_operation(graphql_op, force_local=False):
         api_key = "da2-fakeApiId123456"
         graphql_endpoint = "http://192.168.1.25:20002/graphql"
     else:
+        graphql_endpoint = get_appsync_graphql_endpoint(amplify_env)
         ssm = boto3.client('ssm')
         parameter = ssm.get_parameter(
             Name=f'/amplify/d2lw19uzgyfl97/{amplify_env}/AMPLIFY_referencesync_reference_api_key',
             WithDecryption=True)
         api_key = parameter['Parameter']['Value']
         # NOTE: maybe we should retrieve the value from aws-config?
-        graphql_endpoint = "https://idmuuu5euvhflkxgdjq4mq7ryu.appsync-api.us-east-1.amazonaws.com/graphql"
 
     headers = {
         'Content-type': 'application/json',
