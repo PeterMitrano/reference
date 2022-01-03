@@ -97,8 +97,7 @@ def extract_citation_info(dbx, file):
 
     # I'd like to train this system from data
     pdf_metadata = extract_standardized_metadata(dbx, file)
-    if pdf_metadata is None:
-        return NO_CITATION_INFO
+
     # NOTE: we need a fallback for when the title and author are blank!
     #  perhaps take in a whole slew of features here and use ML to determine title and author,
     #  then do semantic scholar search?

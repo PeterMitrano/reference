@@ -11,7 +11,7 @@ TITLE_GUESS_MAX_LENGTH = 256
 
 
 @dataclass
-class StandardizedPDFMetadata:
+class TitleAuthor:
     title: str
     author: str
 
@@ -23,16 +23,17 @@ def extract_standardized_metadata(dbx, file):
     doc = PDFDocument(parser)
     metadata = doc.info[0]
 
+    full_text = extract_text(io_fp, maxpages=1)
+    # use an ML model to extract title and author information from full text? train it on S2ORC?
+
     if 'Title' in metadata and 'Author' in metadata:
         title = metadata['Title'].decode("utf-8", errors='ignore')
         authors = metadata['Author'].decode("utf-8", errors='ignore')
-        return StandardizedPDFMetadata(title, authors)
+        return TitleAuthor(title, authors)
     elif 'Title' in metadata:
         title = metadata['Title'].decode("utf-8", errors='ignore')
-        return StandardizedPDFMetadata(title, '')
+        return TitleAuthor(title, '')
     else:
-        full_text = extract_text(io_fp)
         title_guess_from_text = full_text.split('\n')[0]
         title_guess_from_text = title_guess_from_text[:TITLE_GUESS_MAX_LENGTH]
-
-        return StandardizedPDFMetadata(title_guess_from_text, '')
+        return TitleAuthor(title_guess_from_text, '')
