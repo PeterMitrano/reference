@@ -132,13 +132,11 @@ def list_papers_for_token_with_confidence(dropbox_oauth_token, threshold=DEFAULT
     return papers
 
 
-def get_appsync_graphql_endpoint(amplify_env):
+def get_appsync_graphql_endpoint():
     api_id = os.environ['API_REFERENCE_GRAPHQLAPIIDOUTPUT']
-    print(api_id)
     client = boto3.client('appsync')
-    api = client.get_graphql_api(api_id)
-    print(api['graphqlApi']['uris'])
-    return 'fake_endpoint'
+    api = client.get_graphql_api(apiId=api_id)
+    return api['graphqlApi']['uris']['GRAPHQL']
 
 
 def graphql_operation(graphql_op, force_local=False):
@@ -152,7 +150,7 @@ def graphql_operation(graphql_op, force_local=False):
         api_key = "da2-fakeApiId123456"
         graphql_endpoint = "http://192.168.1.25:20002/graphql"
     else:
-        graphql_endpoint = get_appsync_graphql_endpoint(amplify_env)
+        graphql_endpoint = get_appsync_graphql_endpoint()
         ssm = boto3.client('ssm')
         parameter = ssm.get_parameter(
             Name=f'/amplify/d2lw19uzgyfl97/{amplify_env}/AMPLIFY_referencesync_reference_api_key',
