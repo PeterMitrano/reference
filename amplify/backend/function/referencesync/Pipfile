@@ -19,6 +19,8 @@ atoma = "*"
 arxiv = "*"
 numpy = "*"
 editdistance = "*"
+pyperclip = "*"
+openai = "*"
 
 [requires]
 python_version = "3.8"

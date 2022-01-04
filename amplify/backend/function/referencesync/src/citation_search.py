@@ -1,4 +1,5 @@
 import io
+import re
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import List
@@ -6,6 +7,7 @@ from typing import List
 import arxiv
 import editdistance
 import numpy as np
+import openai
 import requests
 from arxiv import HTTPError, UnexpectedEmptyPageError
 from pdfminer.high_level import extract_pages, extract_text
@@ -19,6 +21,8 @@ from logging_utils import get_logger
 logger = get_logger(__file__)
 DEFAULT_CONFIDENCE_THRESHOLD = 0.5
 MAX_QUERY_SIZE = 256
+MAX_FULL_TEXT = 512
+MAX_ELEMENTS = 6
 
 
 @dataclass
@@ -31,6 +35,13 @@ class Citation:
 
 
 NO_CITATION_INFO = Citation(title='', authors=[], venue='', year=0, confidence=0.0)
+
+
+def titlecase(s):
+    """ taken from https://www.pythontutorial.net/python-string-methods/python-titlecase/ """
+    return re.sub("[A-Za-z]+('[A-Za-z]+)?",
+                  lambda word: word.group(0).capitalize(),
+                  s)
 
 
 def strify(x):
@@ -72,7 +83,6 @@ def search_semantic_scholar(query: str):
     )
 
 
-@lru_cache
 def query_arxiv(query='', id_list=None):
     if id_list is None:
         id_list = []
@@ -90,13 +100,16 @@ def query_arxiv(query='', id_list=None):
         return NO_CITATION_INFO
 
 
+@lru_cache
 def search_arxiv(query_str):
     return query_arxiv(query=query_str)
 
 
 def guess_arxiv_from_filename(name):
-    arxiv_id = name.strip(".pdf").strip("/")
-    return query_arxiv(id_list=[arxiv_id])
+    arxiv_id = name.strip(".pdf").strip("/.-")
+    if re.fullmatch(r'[0-9]+.[0-9]+', arxiv_id):
+        return query_arxiv(id_list=[arxiv_id])
+    return NO_CITATION_INFO
 
 
 def guess_from_pdf_metadata(pdf_fp):
@@ -104,6 +117,7 @@ def guess_from_pdf_metadata(pdf_fp):
     doc = PDFDocument(parser)
     pdf_metadata = doc.info[0]
 
+    # FIXME: utf-8 is totally unacceptable
     return Citation(
         title=pdf_metadata.get('Title', b'').decode("utf-8", errors='ignore'),
         authors=pdf_metadata.get('Author', b'').decode("utf-8", errors='ignore').split(" "),  # TODO: be smarter here
@@ -113,16 +127,32 @@ def guess_from_pdf_metadata(pdf_fp):
     )
 
 
-def guess_from_nlp(pdf_fp):
-    inputs = language_model_inputs(pdf_fp)
-    return NO_CITATION_INFO
+def format_element_for_gpt(element_idx, x):
+    # x[text, bbox, w, h]
+    text, _, w, h = x
+    text = text.strip(" \n").replace('\n', '')
+    return f'{element_idx}:\n\tTEXT: {text}\n\tW: {w}, H: {h}'
 
 
-def language_model_inputs(pdf_fp):
-    full_text = extract_text(pdf_fp, maxpages=1)  # feature to ML mode
+def format_inputs_for_gpt(full_text, elements):
+    elements_str = '\n'.join([format_element_for_gpt(i, x) for i, x in enumerate(elements)])
+    return '\n'.join([
+        f"Full Text:",
+        full_text.strip(" \n").replace("\n", " "),
+        "The title is",
+        # f"ELEMENTS:",
+        # elements_str
+    ])
 
-    features = []  # feature to ML mode
+
+def make_gpt_prompt(pdf_fp):
+    full_text = extract_text(pdf_fp, maxpages=1)
+    full_text = full_text[:MAX_FULL_TEXT]
+
+    elements = []
     for page_layout in extract_pages(pdf_fp, maxpages=1):
+        if len(elements) >= MAX_ELEMENTS:
+            break
         for element in page_layout:
             if hasattr(element, 'get_text'):
                 text = element.get_text()
@@ -131,8 +161,34 @@ def language_model_inputs(pdf_fp):
             bbox = [str(int(x)) for x in element.bbox]
             w = str(int(element.width))
             h = str(int(element.height))
-            features.append([text, bbox, w, h])
-    return full_text, features
+            elements.append([text, bbox, w, h])
+    inputs = format_inputs_for_gpt(full_text, elements)
+    return inputs
+
+
+def guess_from_nlp(pdf_fp, n_completions):
+    prompt = make_gpt_prompt(pdf_fp)
+    completion = openai.Completion.create(engine="babbage-instruct-beta", prompt=prompt, max_tokens=20, n=n_completions)
+
+    guesses = []
+    for choice in completion['choices']:
+        title = choice['text'].strip("\n ")
+        if "\"" in title:
+            title = re.sub(r"^.*?\"", "\"", title)
+            m = re.findall(r"([^\"]+)", title, flags=re.MULTILINE)
+            title = m[0]
+        else:
+            title = title.split("\n")[0]
+        title = titlecase(title)
+        guess = Citation(
+            title=title,
+            authors=[],
+            venue='',
+            year=0,
+            confidence=0.1,
+        )
+        guesses.append(guess)
+    return guesses
 
 
 def search_online_databases(citation):
@@ -153,13 +209,13 @@ class CitationGA(GA):
         self.pdf_fp = pdf_fp
 
     def initialize(self):
-        nlp_guess = guess_from_nlp(self.pdf_fp)
+        nlp_guess = guess_from_nlp(self.pdf_fp, n_completions=2)
 
         population = [
             guess_from_pdf_metadata(self.pdf_fp),
             guess_arxiv_from_filename(self.filename),
-            nlp_guess,
         ]
+        population += nlp_guess
 
         population = self.rng.choice(population, self.population_size)
         return population
