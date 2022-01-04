@@ -1,10 +1,10 @@
-import io
 from time import perf_counter
+import numpy as np
 
 from dropbox import Dropbox
 
-from citation_search import CitationGA
-from dropbox_utils import get_pdf_files, download_from_dropbox
+from citation_search import CitationGA, extract_citation
+from dropbox_utils import get_pdf_files
 
 
 class TestCitationGA(CitationGA):
@@ -23,27 +23,17 @@ class TestCitationGA(CitationGA):
 
 
 def main():
-    test_idx = 0
+    np.set_printoptions(linewidth=250)
+    # test_idx = 0
     # test_name = "/https%2Fscience-sciencemag-org.proxy.lib.umich.edu%2Fcontent%2Fsci%2F369%2F6506.pdf"
     dropbox_oauth_token = "TiA1HlRcg2oAAAAAAAAAAe42lvAY77xyzbJoobhxFm3JtezXpZHrDmJIS2ODkYxm"
     with Dropbox(oauth2_access_token=dropbox_oauth_token) as dbx:
         files_and_paths = list(get_pdf_files(dbx))
-        # for file, file_path in files_and_paths:
-        #     if file_path == test_name:
-        #         break
-        file, file_path = files_and_paths[test_idx]
-
-    t0 = perf_counter()
-
-    file_data = download_from_dropbox(dbx, file.name)
-    pdf_fp = io.BytesIO(file_data)
-
-    ga = CitationGA(filename=file.name, pdf_fp=pdf_fp, population_size=100)
-    citation = ga.opt()
-    print(citation)
-
-    dt = perf_counter() - t0
-    print('dt', dt)
+        for file, file_path in files_and_paths:
+            t0 = perf_counter()
+            print(extract_citation(dbx, file))
+            dt = perf_counter() - t0
+            print('dt', dt)
 
     # test_init = Citation(
     #     title="Embracing Change",

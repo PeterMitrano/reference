@@ -1,6 +1,7 @@
 import io
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from functools import lru_cache
 from typing import List
 
@@ -17,24 +18,6 @@ from pdfminer.pdfparser import PDFParser
 from dropbox_utils import download_from_dropbox
 from ga import GA
 from logging_utils import get_logger
-
-logger = get_logger(__file__)
-DEFAULT_CONFIDENCE_THRESHOLD = 0.5
-MAX_QUERY_SIZE = 256
-MAX_FULL_TEXT = 512
-MAX_ELEMENTS = 6
-
-
-@dataclass
-class Citation:
-    title: str
-    authors: List[str]
-    venue: str
-    year: int
-    confidence: float
-
-
-NO_CITATION_INFO = Citation(title='', authors=[], venue='', year=0, confidence=0.0)
 
 
 def titlecase(s):
@@ -53,6 +36,31 @@ def intify(x):
         return int(x) if x is not None else 0
     except ValueError:
         return 0
+
+
+logger = get_logger(__file__)
+DEFAULT_CONFIDENCE_THRESHOLD = 0.5
+MAX_QUERY_SIZE = 256
+MAX_FULL_TEXT = 512
+MAX_ELEMENTS = 6
+CURRENT_YEAR = intify(datetime.now().strftime('%Y'))
+YEAR_WEIGHT = 0.1
+
+
+@dataclass
+class Citation:
+    title: str
+    authors: List[str]
+    venue: str
+    year: int
+    confidence: float
+
+    def __repr__(self):
+        author_str = self.authors[0] if len(self.authors) > 0 else 'NA'
+        return f"<{self.title}, {author_str}... , {self.year}, {self.venue}>"
+
+
+NO_CITATION_INFO = Citation(title='', authors=[], venue='', year=CURRENT_YEAR, confidence=0.0)
 
 
 @lru_cache
@@ -122,7 +130,7 @@ def guess_from_pdf_metadata(pdf_fp):
         title=pdf_metadata.get('Title', b'').decode("utf-8", errors='ignore'),
         authors=pdf_metadata.get('Author', b'').decode("utf-8", errors='ignore').split(" "),  # TODO: be smarter here
         venue='',
-        year=0,
+        year=CURRENT_YEAR,
         confidence=0.2,
     )
 
@@ -134,18 +142,15 @@ def format_element_for_gpt(element_idx, x):
     return f'{element_idx}:\n\tTEXT: {text}\n\tW: {w}, H: {h}'
 
 
-def format_inputs_for_gpt(full_text, elements):
-    elements_str = '\n'.join([format_element_for_gpt(i, x) for i, x in enumerate(elements)])
+def format_inputs_for_gpt(full_text, gpt_question):
     return '\n'.join([
         f"Full Text:",
         full_text.strip(" \n").replace("\n", " "),
-        "The title is",
-        # f"ELEMENTS:",
-        # elements_str
+        gpt_question + ':',
     ])
 
 
-def make_gpt_prompt(pdf_fp):
+def make_gpt_prompt(pdf_fp, gpt_question):
     full_text = extract_text(pdf_fp, maxpages=1)
     full_text = full_text[:MAX_FULL_TEXT]
 
@@ -162,36 +167,63 @@ def make_gpt_prompt(pdf_fp):
             w = str(int(element.width))
             h = str(int(element.height))
             elements.append([text, bbox, w, h])
-    inputs = format_inputs_for_gpt(full_text, elements)
-    return inputs
+    prompt = format_inputs_for_gpt(full_text, gpt_question)
+    return prompt
+
+
+def authors_from_gpt_choice(choice):
+    authors = choice['text'].strip("\n ")
+    authors = authors.split(".")[0].split("\n")[0]
+    authors = authors.split(",")
+    authors = [author.strip(" \n\t,:\"\'") for author in authors]
+    return authors
+
+
+def title_from_gpt_choice(choice):
+    title = choice['text'].strip("\n ")
+    if "\"" in title:
+        title = re.sub(r"^.*?\"", "\"", title)
+        m = re.findall(r"([^\"]+)", title, flags=re.MULTILINE)
+        title = m[0]
+    else:
+        title = title.split("\n")[0]
+    title = titlecase(title).strip(".'\"")
+    return title
 
 
 def guess_from_nlp(pdf_fp, n_completions):
-    prompt = make_gpt_prompt(pdf_fp)
-    completion = openai.Completion.create(engine="babbage-instruct-beta", prompt=prompt, max_tokens=20, n=n_completions)
+    guess_title_prompt = make_gpt_prompt(pdf_fp, gpt_question="The title is")
+    title_completion = openai.Completion.create(engine="babbage-instruct-beta",
+                                                prompt=guess_title_prompt,
+                                                max_tokens=20,
+                                                n=n_completions)
+    guess_authors_prompt = make_gpt_prompt(pdf_fp, gpt_question="The author's names are:")
+    authors_completion = openai.Completion.create(engine="babbage-instruct-beta",
+                                                  prompt=guess_authors_prompt,
+                                                  max_tokens=32,
+                                                  n=n_completions)
 
+    choices = zip(title_completion['choices'], authors_completion['choices'])
     guesses = []
-    for choice in completion['choices']:
-        title = choice['text'].strip("\n ")
-        if "\"" in title:
-            title = re.sub(r"^.*?\"", "\"", title)
-            m = re.findall(r"([^\"]+)", title, flags=re.MULTILINE)
-            title = m[0]
-        else:
-            title = title.split("\n")[0]
-        title = titlecase(title)
+    for title_completion_choice, authors_completion_choice in choices:
+        title = title_from_gpt_choice(title_completion_choice)
+        authors = authors_from_gpt_choice(authors_completion_choice)
         guess = Citation(
             title=title,
-            authors=[],
+            authors=authors,
             venue='',
-            year=0,
+            year=CURRENT_YEAR,
             confidence=0.1,
         )
         guesses.append(guess)
+
     return guesses
 
 
 def search_online_databases(citation):
+    if len(citation.title) == 0:
+        return [NO_CITATION_INFO]
+
     query_string = f"{citation.title}"
     query_string = query_string[:MAX_QUERY_SIZE]
     arxiv_citation = search_arxiv(query_string)
@@ -209,7 +241,7 @@ class CitationGA(GA):
         self.pdf_fp = pdf_fp
 
     def initialize(self):
-        nlp_guess = guess_from_nlp(self.pdf_fp, n_completions=2)
+        nlp_guess = guess_from_nlp(self.pdf_fp, n_completions=3)
 
         population = [
             guess_from_pdf_metadata(self.pdf_fp),
@@ -229,26 +261,30 @@ class CitationGA(GA):
         all_costs = []
         for online_citation in online_citations:
             if online_citation == NO_CITATION_INFO:
-                continue
-            field_costs = [
-                editdistance.eval(citation.title, online_citation.title),
-                editdistance.eval(citation.venue, online_citation.venue),
-                np.abs(citation.year - online_citation.year),
-            ]
-            authors_costs = [editdistance.eval(a1, a2) for a1, a2 in zip(citation.authors, online_citation.authors)]
-            field_costs += authors_costs
-            cost = sum(field_costs)
-            all_costs.append(cost)
+                all_costs.append(100000)
+            else:
+                field_costs = [
+                    editdistance.eval(citation.title, online_citation.title),
+                    editdistance.eval(citation.venue, online_citation.venue),
+                    np.abs(citation.year - online_citation.year) * YEAR_WEIGHT,
+                ]
+                authors_costs = [editdistance.eval(a1, a2) for a1, a2 in zip(citation.authors, online_citation.authors)]
+                field_costs += authors_costs
+                cost = sum(field_costs)
+                all_costs.append(cost)
         return np.min(all_costs)
 
     def mutate(self, citation: Citation):
         # To mutate, we simply perform crossover with search results
         online_citations = search_online_databases(citation)
         valid_online_citations = list(filter(lambda c: c != NO_CITATION_INFO, online_citations))
+
+        if len(valid_online_citations) == 0:
+            return citation
+
         sampled_online_citation = self.rng.choice(valid_online_citations)
-        if sampled_online_citation is not None:
-            return self.crossover(citation, sampled_online_citation)
-        return citation
+
+        return self.crossover(citation, sampled_online_citation)
 
     def crossover(self, citation1: Citation, citation2: Citation):
         # randomly inherit each field from parents
@@ -267,6 +303,6 @@ def extract_citation(dbx, file):
     file_data = download_from_dropbox(dbx, file.name)
     pdf_fp = io.BytesIO(file_data)
 
-    ga = CitationGA(filename=file.name, pdf_fp=pdf_fp)
+    ga = CitationGA(filename=file.name, pdf_fp=pdf_fp, population_size=20)
 
     return ga.opt(generations=4)
