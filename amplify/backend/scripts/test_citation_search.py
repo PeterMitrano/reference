@@ -1,6 +1,6 @@
 from dropbox import Dropbox
 
-from citation_search import extract_citation_info
+from citation_search import extract_citation
 from dropbox_utils import get_pdf_files
 
 
@@ -14,8 +14,8 @@ def main():
         #     if file_path == test_name:
         #         break
         file, file_path = files_and_paths[test_idx]
-    citation_info = extract_citation_info(dbx, file)
-    print(citation_info)
+    citation = extract_citation(dbx, file)
+    print(citation)
 
 
 if __name__ == '__main__':
