@@ -1,5 +1,6 @@
 import io
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import List
 
 import arxiv
@@ -43,11 +44,12 @@ def intify(x):
         return 0
 
 
+@lru_cache
 def search_semantic_scholar(query: str):
     search_url = 'https://api.semanticscholar.org/graph/v1/paper/search'
     params = {
         'query': query,
-        'limit': 1,
+        'limit': 3,
         'fields': 'title,authors,venue,year',
     }
     res = requests.get(search_url, params)
@@ -70,10 +72,11 @@ def search_semantic_scholar(query: str):
     )
 
 
+@lru_cache
 def query_arxiv(query='', id_list=None):
     if id_list is None:
         id_list = []
-    search = arxiv.Search(query=query, id_list=id_list, max_results=1)
+    search = arxiv.Search(query=query, id_list=id_list, max_results=3)
     try:
         paper = next(search.results())
         return Citation(
@@ -133,23 +136,12 @@ def language_model_inputs(pdf_fp):
 
 
 def search_online_databases(citation):
-    query_strings = [
-        f"{citation.title} {', '.join(citation.authors)} {citation.year} {citation.venue}",
-        f"{citation.title} {', '.join(citation.authors)} {citation.year}",
-        f"{citation.title} {', '.join(citation.authors)}",
-        f"{citation.title}",
-    ]
-    for query_string in query_strings:
-        query_string = query_string[:MAX_QUERY_SIZE]
-        ss_citation = search_semantic_scholar(query_string)
-        if ss_citation != NO_CITATION_INFO:
-            return ss_citation
+    query_string = f"{citation.title}"
+    query_string = query_string[:MAX_QUERY_SIZE]
+    arxiv_citation = search_arxiv(query_string)
+    ss_citation = search_semantic_scholar(query_string)
 
-        arxiv_citation = search_arxiv(query_string)
-        if arxiv_citation != NO_CITATION_INFO:
-            return arxiv_citation
-
-    return NO_CITATION_INFO
+    return [arxiv_citation, ss_citation]
 
 
 class CitationGA(GA):
@@ -176,8 +168,12 @@ class CitationGA(GA):
         # one way to see if a citation is good is to use it to search a database.
         # If you don't get a result, that's a bad sign and deserves high cost. If you do, then the distance
         # of that result to the citation used for querying can be used as cost
-        online_citation = search_online_databases(citation)
-        if online_citation is not None:
+        online_citations = search_online_databases(citation)
+
+        all_costs = []
+        for online_citation in online_citations:
+            if online_citation == NO_CITATION_INFO:
+                continue
             field_costs = [
                 editdistance.eval(citation.title, online_citation.title),
                 editdistance.eval(citation.venue, online_citation.venue),
@@ -186,27 +182,29 @@ class CitationGA(GA):
             authors_costs = [editdistance.eval(a1, a2) for a1, a2 in zip(citation.authors, online_citation.authors)]
             field_costs += authors_costs
             cost = sum(field_costs)
-            return cost
-        else:
-            return 1
+            all_costs.append(cost)
+        return np.min(all_costs)
 
     def mutate(self, citation: Citation):
         # To mutate, we simply perform crossover with search results
-        online_citation = search_online_databases(citation)
-        if online_citation is not None:
-            return self.crossover(citation, online_citation)
+        online_citations = search_online_databases(citation)
+        valid_online_citations = list(filter(lambda c: c != NO_CITATION_INFO, online_citations))
+        sampled_online_citation = self.rng.choice(valid_online_citations)
+        if sampled_online_citation is not None:
+            return self.crossover(citation, sampled_online_citation)
         return citation
 
     def crossover(self, citation1: Citation, citation2: Citation):
         # randomly inherit each field from parents
         keep_from_1 = (self.rng.rand(4) > 0.5)
-        return Citation(
+        output = Citation(
             title=(citation1.title if keep_from_1[0] else citation2.title),
             authors=(citation1.authors if keep_from_1[1] else citation2.authors),
             venue=(citation1.venue if keep_from_1[2] else citation2.venue),
             year=(citation1.year if keep_from_1[3] else citation2.year),
             confidence=(citation1.confidence + citation2.confidence) / 2,
         )
+        return output
 
 
 def extract_citation(dbx, file):
@@ -215,4 +213,4 @@ def extract_citation(dbx, file):
 
     ga = CitationGA(filename=file.name, pdf_fp=pdf_fp)
 
-    return ga.opt()
+    return ga.opt(generations=4)

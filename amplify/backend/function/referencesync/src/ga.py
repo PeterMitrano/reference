@@ -21,7 +21,7 @@ class GA:
     def __init__(self):
         self.rng = np.random.RandomState(0)
 
-    def opt(self, generations=3, cost_threshold=1e-5, selection_fraction=0.2):
+    def opt(self, generations=3, cost_threshold=1, selection_fraction=0.2):
         population = np.array(self.initialize())
         population_size = len(population)
         elite = None
