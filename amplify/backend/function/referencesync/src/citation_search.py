@@ -310,10 +310,19 @@ class CitationGA(GA):
         return output
 
 
+def standardize_venue(venue):
+    print("TODO!!!")
+    return venue
+
+
 def extract_citation(dbx, file):
     file_data = download_from_dropbox(dbx, file.name)
     pdf_fp = io.BytesIO(file_data)
 
     ga = CitationGA(filename=file.name, pdf_fp=pdf_fp, population_size=20)
 
-    return ga.opt(generations=4)
+    best_citation = ga.opt(generations=4)
+    best_citation.title = titlecase(best_citation.title)
+    best_citation.venue = standardize_venue(best_citation.venue)
+
+    return best_citation

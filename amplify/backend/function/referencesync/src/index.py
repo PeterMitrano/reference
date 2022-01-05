@@ -4,7 +4,7 @@ from time import time
 from dropbox import Dropbox
 
 from bib import generate_bib
-from citation_search import extract_citation_info, DEFAULT_CONFIDENCE_THRESHOLD
+from citation_search import DEFAULT_CONFIDENCE_THRESHOLD, extract_citation
 from database import check_paper, create_paper
 from dropbox_utils import get_pdf_files
 from logging_utils import get_logger
@@ -24,7 +24,7 @@ def update_papers_table(dbx, dropbox_oauth_token):
     for pdf_file, original_path in get_pdf_files(dbx):
         exists = check_paper(dropbox_oauth_token, original_path)
         if not exists:
-            citation_info = extract_citation_info(dbx, pdf_file)
+            citation_info = extract_citation(dbx, pdf_file)
 
             if citation_info.confidence > DEFAULT_CONFIDENCE_THRESHOLD:
                 relocation_path = rename_file(original_path, citation_info)
