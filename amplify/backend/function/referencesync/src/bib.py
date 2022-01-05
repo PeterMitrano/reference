@@ -16,7 +16,7 @@ def generate_bib(dropbox_oauth_token):
 
     entries = []
 
-    titles = [p.title for p in papers]
+    titles = [p['title'] for p in papers]
     cite_names = choose_cite_names(titles)
 
     for paper, cite_name in zip(papers, cite_names):
@@ -43,9 +43,7 @@ def softmax(x):
 
 def choose_cite_names(titles):
     rng = np.random.RandomState(0)
-    # TODO: we need to ensure all the "cite" names are unique
-    #  a better method would be a randomized algorithm that proposes cite names for everything and stops
-    #  once they're all unique
+    j = 0
     while True:
         sampled_cite_names = []
         for title in titles:
@@ -57,7 +55,9 @@ def choose_cite_names(titles):
             sampled_cite_names.append(sampled_cite_name)
 
         all_unique = (len(set(sampled_cite_names)) == len(sampled_cite_names))
+        j += 1
         if all_unique:
+            logger.info(f"Finding unique cite names took {j} tries")
             return sampled_cite_names
 
 
@@ -74,7 +74,7 @@ def scored_cite_names(title):
     for w in uncleaned_words:
         cleaned_word = w
         for c in chars_to_replace:
-            cleaned_word = w.replace(c, '')
+            cleaned_word = cleaned_word.replace(c, '')
         cleaned_words.append(cleaned_word)
 
     cleaned_words = list(filter(lambda w: w not in ['', ' '], cleaned_words))
@@ -82,14 +82,15 @@ def scored_cite_names(title):
         common_words = [l.strip("\n") for l in f.readlines()]
 
     scores = []
-    for word_in_title in cleaned_words:
+    for i, word_in_title in enumerate(cleaned_words):
         word_in_title = word_in_title.lower()
         score = 0
         if word_in_title not in common_words:
             score += 100
-        score += len(word_in_title)
+        score += len(word_in_title) / 3
         if word_in_title in pre_colon_words:
             score += 100
+        score += int(5 / (i + 1))
         scores.append(score)
 
     return np.array(cleaned_words), np.array(scores)
