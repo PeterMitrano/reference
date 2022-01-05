@@ -8,18 +8,14 @@ verify_ssl = true
 [packages]
 src = {editable = true, path = "./src"}
 aws-wsgi = "*"
-boto3 = "*"
 dropbox = "*"
 "pdfminer.six" = "*"
 gql = "*"
 pydevd = "*"
 tqdm = "*"
 pyyaml = "*"
-atoma = "*"
 arxiv = "*"
 numpy = "*"
-editdistance = "*"
-pyperclip = "*"
 openai = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
