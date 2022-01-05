@@ -6,12 +6,13 @@ from functools import lru_cache
 from typing import List
 
 import arxiv
-import editdistance
 import numpy as np
 import openai
 import requests
+from Levenshtein import distance
 from arxiv import HTTPError, UnexpectedEmptyPageError
-from pdfminer.high_level import extract_pages, extract_text
+from fuzzywuzzy import fuzz
+from pdfminer.high_level import extract_text
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfparser import PDFParser
 
@@ -56,8 +57,8 @@ class Citation:
     confidence: float
 
     def __repr__(self):
-        author_str = self.authors[0] if len(self.authors) > 0 else 'NA'
-        return f"<{self.title}, {author_str}... , {self.year}, {self.venue}>"
+        author_str = ','.join(self.authors) if len(self.authors) > 0 else 'NA'
+        return f"<{self.title}: {author_str}, {self.year}@{self.venue}>"
 
 
 NO_CITATION_INFO = Citation(title='', authors=[], venue='', year=CURRENT_YEAR, confidence=0.0)
@@ -150,23 +151,7 @@ def format_inputs_for_gpt(full_text, gpt_question):
     ])
 
 
-def make_gpt_prompt(pdf_fp, gpt_question):
-    full_text = extract_text(pdf_fp, maxpages=1)
-    full_text = full_text[:MAX_FULL_TEXT]
-
-    elements = []
-    for page_layout in extract_pages(pdf_fp, maxpages=1):
-        if len(elements) >= MAX_ELEMENTS:
-            break
-        for element in page_layout:
-            if hasattr(element, 'get_text'):
-                text = element.get_text()
-            else:
-                text = ''
-            bbox = [str(int(x)) for x in element.bbox]
-            w = str(int(element.width))
-            h = str(int(element.height))
-            elements.append([text, bbox, w, h])
+def make_gpt_prompt(full_text, gpt_question):
     prompt = format_inputs_for_gpt(full_text, gpt_question)
     return prompt
 
@@ -229,7 +214,51 @@ def search_online_databases(citation):
     arxiv_citation = search_arxiv(query_string)
     ss_citation = search_semantic_scholar(query_string)
 
-    return [arxiv_citation, ss_citation]
+    return np.array([arxiv_citation, ss_citation])
+
+
+def venue_cost(venue, online_venue):
+    if len(online_venue) == 0 and len(venue) == 0:
+        return 100
+    elif len(online_venue) == 0:
+        return 0
+    else:
+        return distance(venue, online_venue)
+
+
+def authors_distance(authors, online_authors):
+    num_authors_mismatch = abs(len(authors) - len(online_authors))
+    authors_costs = sum([distance(a1, a2) for a1, a2 in zip(authors, online_authors)])
+    return authors_costs + num_authors_mismatch
+
+
+def online_search_cost(citation):
+    # one way to see if a citation is good is to use it to search a database.
+    # If you don't get a result, that's a bad sign and deserves high cost. If you do, then the distance
+    # of that result to the citation used for querying can be used as cost
+    all_online_citations = search_online_databases(citation)
+    valid_online_citations = list(filter(lambda c: c != NO_CITATION_INFO, all_online_citations))
+    if np.all(valid_online_citations == NO_CITATION_INFO) or len(valid_online_citations) == 0:
+        return 100000
+
+    all_costs = []
+    for online_citation in valid_online_citations:
+        field_costs = [
+            distance(citation.title, online_citation.title),
+            authors_distance(citation.authors, online_citation.authors),
+            venue_cost(citation.venue, online_citation.venue),
+            np.abs(citation.year - online_citation.year) * YEAR_WEIGHT,
+            # cost for empty venue. Helpful since sometimes online search has empty venue too
+            (10 if len(citation.venue) == 0 else 0),
+        ]
+        cost = sum(field_costs)
+        all_costs.append(cost)
+    return np.min(all_costs)
+
+
+def dist_to_original_doct(citation, full_text):
+    d = 100 - fuzz.partial_ratio(citation.title.lower(), full_text.lower())
+    return d
 
 
 class CitationGA(GA):
@@ -239,9 +268,10 @@ class CitationGA(GA):
         self.population_size = population_size
         self.filename = filename
         self.pdf_fp = pdf_fp
+        self.full_text = extract_text(pdf_fp, maxpages=1)[:MAX_FULL_TEXT]
 
     def initialize(self):
-        nlp_guess = guess_from_nlp(self.pdf_fp, n_completions=3)
+        nlp_guess = guess_from_nlp(self.full_text, n_completions=3)
 
         population = [
             guess_from_pdf_metadata(self.pdf_fp),
@@ -253,26 +283,7 @@ class CitationGA(GA):
         return population
 
     def cost(self, citation: Citation):
-        # one way to see if a citation is good is to use it to search a database.
-        # If you don't get a result, that's a bad sign and deserves high cost. If you do, then the distance
-        # of that result to the citation used for querying can be used as cost
-        online_citations = search_online_databases(citation)
-
-        all_costs = []
-        for online_citation in online_citations:
-            if online_citation == NO_CITATION_INFO:
-                all_costs.append(100000)
-            else:
-                field_costs = [
-                    editdistance.eval(citation.title, online_citation.title),
-                    editdistance.eval(citation.venue, online_citation.venue),
-                    np.abs(citation.year - online_citation.year) * YEAR_WEIGHT,
-                ]
-                authors_costs = [editdistance.eval(a1, a2) for a1, a2 in zip(citation.authors, online_citation.authors)]
-                field_costs += authors_costs
-                cost = sum(field_costs)
-                all_costs.append(cost)
-        return np.min(all_costs)
+        return online_search_cost(citation) + dist_to_original_doct(citation, self.full_text)
 
     def mutate(self, citation: Citation):
         # To mutate, we simply perform crossover with search results

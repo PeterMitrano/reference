@@ -21,6 +21,8 @@ numpy = "*"
 editdistance = "*"
 pyperclip = "*"
 openai = "*"
+fuzzywuzzy = "*"
+python-levenshtein = "*"
 
 [requires]
 python_version = "3.8"

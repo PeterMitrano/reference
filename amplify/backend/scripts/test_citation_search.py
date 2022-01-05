@@ -23,12 +23,14 @@ class TestCitationGA(CitationGA):
 
 
 def main():
-    np.set_printoptions(linewidth=250)
+    np.set_printoptions(linewidth=200, precision=1, suppress=True)
     # test_idx = 0
     # test_name = "/https%2Fscience-sciencemag-org.proxy.lib.umich.edu%2Fcontent%2Fsci%2F369%2F6506.pdf"
+    rng = np.random.RandomState(0)
     dropbox_oauth_token = "TiA1HlRcg2oAAAAAAAAAAe42lvAY77xyzbJoobhxFm3JtezXpZHrDmJIS2ODkYxm"
     with Dropbox(oauth2_access_token=dropbox_oauth_token) as dbx:
         files_and_paths = list(get_pdf_files(dbx))
+        rng.shuffle(files_and_paths)
         for file, file_path in files_and_paths:
             t0 = perf_counter()
             print(extract_citation(dbx, file))
