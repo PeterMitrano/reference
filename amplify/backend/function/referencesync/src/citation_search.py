@@ -65,6 +65,87 @@ NO_CITATION_INFO = Citation(title='', authors=[], venue='', year=CURRENT_YEAR, c
 
 
 @lru_cache
+def search_dblp(endpoint, query):
+    url = f"https://dblp.org/search/{endpoint}/api?"
+    res = requests.get(url, params={'q': query, 'format': 'json', 'h': 1})
+    if not res.ok:
+        logger.error("Failed to search dblp")
+        return None
+
+    res_json = res.json()
+    result = res_json.get("result")
+    if result is None:
+        logger.error("Failed to search dblp, no 'result' json")
+        logger.error(res_json)
+        return None
+
+    hits = result['hits']
+    n_hits = int(hits['@total'])
+    if int(n_hits) == 0:
+        return None
+
+    hit = hits['hit'][0]
+    info = hit['info']
+
+    # for hit in hits['hit']:
+    #     print(hit['info']['venue'], hit['@score'])
+
+    return info
+
+
+@lru_cache
+def standardize_venue(venue: str):
+    venue_lower = venue.lower()
+
+    if venue_lower == 'arxiv':  # special case because dblp has it listed as CoRR which is confusing and stupid
+        return 'ArXiv'
+
+    matches = re.findall(r"([^\(\)]+)", venue, flags=re.MULTILINE)
+    substrings_to_remove = [
+        "proceedings",
+        "th",
+        "st",
+        "annual",
+        ",",
+        "/",
+        "'",
+        "\"",
+    ]
+    venue_cleaned = re.sub(r"[\d+]", "", venue_lower)
+    for sub in substrings_to_remove:
+        venue_cleaned = venue_cleaned.replace(sub, "")
+    venue_cleaned = venue_cleaned.strip(" ")
+
+    venue_guesses = [venue_lower, venue_cleaned] + matches
+    for query in venue_guesses:
+        info = search_dblp(endpoint='venue', query=query)
+        if info is not None:
+            new_venue = info['venue']
+            new_acronym = info.get("acronym", "")
+            similarity_new = fuzz.partial_ratio(new_venue, venue)
+            similarity_new_acronym = fuzz.partial_ratio(new_acronym, venue)
+            if re.match(r"\d+", new_venue):
+                continue
+            if similarity_new_acronym < 70 and similarity_new < 70:
+                continue
+            if 'acronym' in info:
+                if re.match(r"[0-9]+", info['acronym']):
+                    continue
+                return info['acronym']
+            else:
+                return info['venue']
+    return venue
+
+
+@lru_cache
+def standardize_author(author: str):
+    info = search_dblp(endpoint='author', query=author)
+    if info is None:
+        return author
+    return info['author']
+
+
+@lru_cache
 def search_semantic_scholar(query: str):
     search_url = 'https://api.semanticscholar.org/graph/v1/paper/search'
     params = {
@@ -261,6 +342,15 @@ def dist_to_original_doct(citation, full_text):
     return d
 
 
+def crossover_authors(rng, authors1, authors2):
+    # return [
+    #     (a1_i if keep_from_1[1] else authors)
+    #
+    #
+    # ]
+    pass
+
+
 class CitationGA(GA):
 
     def __init__(self, filename, pdf_fp, population_size=10):
@@ -295,6 +385,10 @@ class CitationGA(GA):
 
         sampled_online_citation = self.rng.choice(valid_online_citations)
 
+        if self.rng.rand() > 0.5:
+            citation.venue = standardize_venue(citation.venue)
+        citation.authors = [standardize_author(a) if self.rng.rnd() > 0.5 else a for a in citation.authors]
+
         return self.crossover(citation, sampled_online_citation)
 
     def crossover(self, citation1: Citation, citation2: Citation):
@@ -302,17 +396,12 @@ class CitationGA(GA):
         keep_from_1 = (self.rng.rand(4) > 0.5)
         output = Citation(
             title=(citation1.title if keep_from_1[0] else citation2.title),
-            authors=(citation1.authors if keep_from_1[1] else citation2.authors),
+            authors=crossover_authors(citation1.authors, citation2.authors),
             venue=(citation1.venue if keep_from_1[2] else citation2.venue),
             year=(citation1.year if keep_from_1[3] else citation2.year),
             confidence=(citation1.confidence + citation2.confidence) / 2,
         )
         return output
-
-
-def standardize_venue(venue):
-    print("TODO!!!")
-    return venue
 
 
 def extract_citation(dbx, file):
@@ -323,6 +412,5 @@ def extract_citation(dbx, file):
 
     best_citation = ga.opt(generations=4)
     best_citation.title = titlecase(best_citation.title)
-    best_citation.venue = standardize_venue(best_citation.venue)
 
     return best_citation
