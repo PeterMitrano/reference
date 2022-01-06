@@ -80,7 +80,7 @@ def search_dblp(endpoint, query):
         return None
 
     hits = result['hits']
-    n_hits = int(hits['@total'])
+    n_hits = int(hits['@sent'])
     if int(n_hits) == 0:
         return None
 
@@ -118,6 +118,9 @@ def standardize_venue(venue: str):
 
     venue_guesses = [venue_lower, venue_cleaned] + matches
     for query in venue_guesses:
+        if len(query) < 3:
+            continue
+
         info = search_dblp(endpoint='venue', query=query)
         if info is not None:
             new_venue = info['venue']
@@ -310,7 +313,8 @@ def venue_cost(venue, online_venue):
 def authors_distance(authors, online_authors):
     num_authors_mismatch = abs(len(authors) - len(online_authors))
     authors_costs = sum([distance(a1, a2) for a1, a2 in zip(authors, online_authors)])
-    return authors_costs + num_authors_mismatch
+    encourage_long_author_names = sum([50 / len(a) for a in authors])
+    return authors_costs + num_authors_mismatch + encourage_long_author_names
 
 
 def online_search_cost(citation):
@@ -343,12 +347,7 @@ def dist_to_original_doct(citation, full_text):
 
 
 def crossover_authors(rng, authors1, authors2):
-    # return [
-    #     (a1_i if keep_from_1[1] else authors)
-    #
-    #
-    # ]
-    pass
+    raise NotImplementedError()
 
 
 class CitationGA(GA):
@@ -387,7 +386,7 @@ class CitationGA(GA):
 
         if self.rng.rand() > 0.5:
             citation.venue = standardize_venue(citation.venue)
-        citation.authors = [standardize_author(a) if self.rng.rnd() > 0.5 else a for a in citation.authors]
+        citation.authors = [standardize_author(a) if self.rng.rand() > 0.5 else a for a in citation.authors]
 
         return self.crossover(citation, sampled_online_citation)
 
@@ -396,7 +395,8 @@ class CitationGA(GA):
         keep_from_1 = (self.rng.rand(4) > 0.5)
         output = Citation(
             title=(citation1.title if keep_from_1[0] else citation2.title),
-            authors=crossover_authors(citation1.authors, citation2.authors),
+            # authors=crossover_authors(self.rng, citation1.authors, citation2.authors),
+            authors=(citation1.authors if keep_from_1[1] else citation2.authors),
             venue=(citation1.venue if keep_from_1[2] else citation2.venue),
             year=(citation1.year if keep_from_1[3] else citation2.year),
             confidence=(citation1.confidence + citation2.confidence) / 2,
