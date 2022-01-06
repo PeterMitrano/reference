@@ -19,6 +19,7 @@ numpy = "*"
 openai = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
+boto3 = "*"
 
 [requires]
 python_version = "3.8"

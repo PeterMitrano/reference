@@ -1,4 +1,8 @@
 import json
+import os
+
+import boto3
+import openai
 from time import time
 
 from dropbox import Dropbox
@@ -66,7 +70,16 @@ def regenerate(event):
     }
 
 
+def init_openai():
+    ssm = boto3.client("ssm")
+    paramter_name = os.environ['OPENAI_API_KEY']
+    api_key_res = ssm.get_parameter(Name=paramter_name, WithDecryption=True)
+    api_key = api_key_res['Parameter']['Value']
+    openai.api_key = api_key
+
+
 def handler(event, context):
+    init_openai()
     field_name = event['fieldName']
 
     if field_name == 'sync':

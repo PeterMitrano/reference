@@ -211,6 +211,28 @@
             },
             "API_REFERENCE_GRAPHQLAPIKEYOUTPUT": {
               "Ref": "apireferenceGraphQLAPIKeyOutput"
+            },
+            "OPENAI_API_KEY": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::Sub": [
+                      "/amplify/${appId}/${env}/AMPLIFY_${functionName}_",
+                      {
+                        "appId": {
+                          "Ref": "secretsPathAmplifyAppId"
+                        },
+                        "env": {
+                          "Ref": "env"
+                        },
+                        "functionName": "referencesync"
+                      }
+                    ]
+                  },
+                  "OPENAI_API_KEY"
+                ]
+              ]
             }
           }
         },

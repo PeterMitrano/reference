@@ -26,6 +26,7 @@
   "secretNames": [
     "dropbox_app_key",
     "dropbox_app_secret",
-    "reference_api_key"
+    "reference_api_key",
+    "OPENAI_API_KEY"
   ]
 }
