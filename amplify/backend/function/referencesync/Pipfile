@@ -9,8 +9,6 @@ verify_ssl = true
 src = {editable = true, path = "./src"}
 dropbox = "*"
 "pdfminer.six" = "*"
-gql = "*"
-pydevd = "*"
 pyyaml = "*"
 arxiv = "*"
 numpy = "*"
