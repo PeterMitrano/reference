@@ -12,6 +12,7 @@ dropbox = "*"
 arxiv = "*"
 "pdfminer.six" = "*"
 openai-slim = "*"
+fuzzywuzzy = "*"
 
 [dev-packages]
 
