@@ -7,19 +7,16 @@ verify_ssl = true
 
 [packages]
 src = {editable = true, path = "./src"}
-aws-wsgi = "*"
 dropbox = "*"
 "pdfminer.six" = "*"
 gql = "*"
 pydevd = "*"
-tqdm = "*"
 pyyaml = "*"
 arxiv = "*"
 numpy = "*"
 openai = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
-boto3 = "*"
 
 [requires]
 python_version = "3.8"
