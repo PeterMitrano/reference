@@ -47,6 +47,11 @@ MAX_ELEMENTS = 6
 CURRENT_YEAR = intify(datetime.now().strftime('%Y'))
 YEAR_WEIGHT = 0.1
 
+ssm = boto3.client("ssm")
+paramter_name = os.environ['SS_KEY']
+ss_key_res = ssm.get_parameter(Name=paramter_name, WithDecryption=True)
+ss_key = ss_key_res['Parameter']['Value']
+
 
 @dataclass
 class Citation:
@@ -151,10 +156,13 @@ def standardize_author(author: str):
 @lru_cache
 def search_semantic_scholar(query: str):
     search_url = 'https://api.semanticscholar.org/graph/v1/paper/search'
+    ss_key = os.environ['SS_KEY']
+
     params = {
         'query': query,
         'limit': 3,
         'fields': 'title,authors,venue,year',
+        'api-key': ss_key,
     }
     res = requests.get(search_url, params)
     if not res.ok:

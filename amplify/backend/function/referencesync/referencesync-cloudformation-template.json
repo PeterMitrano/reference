@@ -233,6 +233,28 @@
                   "OPENAI_API_KEY"
                 ]
               ]
+            },
+            "SS_KEY": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::Sub": [
+                      "/amplify/${appId}/${env}/AMPLIFY_${functionName}_",
+                      {
+                        "appId": {
+                          "Ref": "secretsPathAmplifyAppId"
+                        },
+                        "env": {
+                          "Ref": "env"
+                        },
+                        "functionName": "referencesync"
+                      }
+                    ]
+                  },
+                  "SS_KEY"
+                ]
+              ]
             }
           }
         },
