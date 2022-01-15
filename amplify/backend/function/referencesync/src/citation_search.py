@@ -156,13 +156,12 @@ def standardize_author(author: str):
 @lru_cache
 def search_semantic_scholar(query: str):
     search_url = 'https://api.semanticscholar.org/graph/v1/paper/search'
-    ss_key = os.environ['SS_KEY']
 
     params = {
         'query': query,
         'limit': 3,
         'fields': 'title,authors,venue,year',
-        'api-key': ss_key,
+        'x-api-key': ss_key,
     }
     res = requests.get(search_url, params)
     if not res.ok:
